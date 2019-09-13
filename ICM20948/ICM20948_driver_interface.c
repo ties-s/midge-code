@@ -58,10 +58,15 @@ int32_t cfg_gyr_fsr = 2000; // Default = +/- 2000dps. Valid ranges: 250, 500, 10
 //	}
 //}
 //
+uint8_t raw[6];
+
 void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 //	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
-	NRF_LOG_INFO("INT");
+
+//	twim_read_register(NULL, 0x2D, raw, 6);
+//	NRF_LOG_INFO("%5d %5d %5d", (int16_t)(raw[0]<<8|raw[1]), (int16_t)(raw[2]<<8|raw[3]), (int16_t)(raw[4]<<8|raw[5]));
+	NRF_LOG_INFO("INT1");
 }
 
 static void gpiote_init(void)
@@ -115,35 +120,25 @@ static void icm20948_sensor_setup()
 	twim_write_register(NULL, REG_PWR_MGMT_1, &data, 1); //wake up the chip - auto select the clock
 	inv_icm20948_sleep_us(50000);
 
-	        /* And in continuous mode */
-//	        enable_cyclemode(false);
 
-	        /* Enable only the accelerometer */
-//	        enable_sensor(true, false, false);
-
-	        /* Set sample rate */
-//	        set_sample_rate(sampleRate);
-
-	        /* Set the bandwidth to 1210Hz */
-//	        set_accel_bandwidth(ICM20648_ACCEL_BW_1210HZ);
-
-	        /* Accel: 2G full scale */
-//	        set_accel_fullscale(ICM20648_ACCEL_FULLSCALE_2G);
-
-	        /* Enable the Wake On Motion interrupt */
-	data = 0x08;
-	twim_write_register(NULL, REG_INT_ENABLE, &data, 1); // wom int enable
+	data = 0x01;
+	twim_write_register(NULL, REG_INT_ENABLE_1, &data, 1); // raw int enable
 	inv_icm20948_sleep_us(50000);
 
-	inv_set_bank(&icm_device, 2);
-
-	/* Enable Wake On Motion feature */
-	data = 0x03;
-	twim_write_register(NULL, 0x12, &data, 1); // wom enable & mode 1
-
-	/* Set the wake on motion threshold value */
+	// change int settings
 	data = 0x80;
-	twim_write_register(NULL, 0x13, &data, 1); // wom enable & mode 1
+	twim_write_register(NULL, REG_INT_PIN_CFG, &data, 1); // int pin cfg to active low
+
+
+//	inv_set_bank(&icm_device, 2);
+//
+//	/* Enable Wake On Motion feature */
+//	data = 0x03;
+//	twim_write_register(NULL, 0x12, &data, 1); // wom enable & mode 1
+//
+//	/* Set the wake on motion threshold value */
+//	data = 0x80;
+//	twim_write_register(NULL, 0x13, &data, 1); // wom enable & mode 1
 
 	nrfx_gpiote_in_event_enable(INT1_PIN, true);
 
