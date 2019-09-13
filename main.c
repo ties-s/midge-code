@@ -111,10 +111,6 @@ int main(void)
 
     for (;;)
     {
-    	nrf_delay_ms(100);
-    	uint8_t raw[6];
-    	twim_read_register(NULL, 0x2D, raw, 6);
-    	NRF_LOG_INFO("%5d %5d %5d", (int16_t)(raw[0]<<8|raw[1]), (int16_t)(raw[2]<<8|raw[3]), (int16_t)(raw[4]<<8|raw[5]));
         idle_state_handle();
     }
 }

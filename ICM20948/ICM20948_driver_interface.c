@@ -58,29 +58,26 @@ int32_t cfg_gyr_fsr = 2000; // Default = +/- 2000dps. Valid ranges: 250, 500, 10
 //	}
 //}
 //
-//void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-//{
-////	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
-//	nrfx_gpiote_in_event_disable(INT1_PIN);
-//
-//
-//	nrfx_gpiote_in_event_enable(INT1_PIN, true);
-//}
-//
-//static void gpiote_init(void)
-//{
-//	ret_code_t err_code;
-//
-//	err_code = nrfx_gpiote_init();
-//	APP_ERROR_CHECK(err_code);
-//
-//	nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
-//	in_config.pull = NRF_GPIO_PIN_PULLUP;
-//
-//	err_code = nrfx_gpiote_in_init(INT1_PIN, &in_config, int_pin_handler);
-//	APP_ERROR_CHECK(err_code);
-//
-//}
+void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+//	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
+	NRF_LOG_INFO("INT");
+}
+
+static void gpiote_init(void)
+{
+	ret_code_t err_code;
+
+	err_code = nrfx_gpiote_init();
+	APP_ERROR_CHECK(err_code);
+
+	nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
+	in_config.pull = NRF_GPIO_PIN_PULLUP;
+
+	err_code = nrfx_gpiote_in_init(INT1_PIN, &in_config, int_pin_handler);
+	APP_ERROR_CHECK(err_code);
+
+}
 
 static void icm20948_sensor_setup()
 {
@@ -118,15 +115,37 @@ static void icm20948_sensor_setup()
 	twim_write_register(NULL, REG_PWR_MGMT_1, &data, 1); //wake up the chip - auto select the clock
 	inv_icm20948_sleep_us(50000);
 
+	        /* And in continuous mode */
+//	        enable_cyclemode(false);
 
-//	nrfx_gpiote_in_event_enable(INT1_PIN, true);
-//
-//	data = 0x90;
-//	twim_write_register(NULL, REG_INT_PIN_CFG, &data, 1); // active low, any read clears the int
-//	data = 0x01;
-//	twim_write_register(NULL, REG_INT_ENABLE_1, &data, 1); // ANY RAW goes to int1
+	        /* Enable only the accelerometer */
+//	        enable_sensor(true, false, false);
 
+	        /* Set sample rate */
+//	        set_sample_rate(sampleRate);
 
+	        /* Set the bandwidth to 1210Hz */
+//	        set_accel_bandwidth(ICM20648_ACCEL_BW_1210HZ);
+
+	        /* Accel: 2G full scale */
+//	        set_accel_fullscale(ICM20648_ACCEL_FULLSCALE_2G);
+
+	        /* Enable the Wake On Motion interrupt */
+	data = 0x08;
+	twim_write_register(NULL, REG_INT_ENABLE, &data, 1); // wom int enable
+	inv_icm20948_sleep_us(50000);
+
+	inv_set_bank(&icm_device, 2);
+
+	/* Enable Wake On Motion feature */
+	data = 0x03;
+	twim_write_register(NULL, 0x12, &data, 1); // wom enable & mode 1
+
+	/* Set the wake on motion threshold value */
+	data = 0x80;
+	twim_write_register(NULL, 0x13, &data, 1); // wom enable & mode 1
+
+	nrfx_gpiote_in_event_enable(INT1_PIN, true);
 
 }
 
@@ -234,7 +253,7 @@ int icm20948_run_selftest(void){
 void icm20948_init(void)
 {
 	twi_init();
-//	gpiote_init();
+	gpiote_init();
 	/*
 	 * Initialize icm20948 serif structure
 	 */

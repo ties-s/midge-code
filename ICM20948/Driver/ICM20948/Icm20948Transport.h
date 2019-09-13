@@ -54,6 +54,8 @@ void inv_icm20948_sleep_100us(unsigned long nHowMany100MicroSecondsToSleep);
 
 long inv_icm20948_get_tick_count(void);
 
+int inv_set_bank(struct inv_icm20948 * s, unsigned char bank);
+
 static inline int inv_icm20948_write_reg_one(struct inv_icm20948 * s, uint8_t reg, uint8_t reg_value)
 {
 	return inv_icm20948_write_reg(s, reg, &reg_value, 1);

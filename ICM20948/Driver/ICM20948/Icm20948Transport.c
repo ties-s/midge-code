@@ -91,7 +91,7 @@ static uint8_t check_reg_access_lp_disable(struct inv_icm20948 * s, unsigned sho
 *  @return     0 if successful.
 */
 
-static int inv_set_bank(struct inv_icm20948 * s, unsigned char bank)
+int inv_set_bank(struct inv_icm20948 * s, unsigned char bank)
 {
 	int result;
 	//if bank reg was set before, just return
