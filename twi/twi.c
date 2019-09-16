@@ -80,7 +80,7 @@ int twim_read_register(void * context, uint8_t address, uint8_t * buffer, uint32
 	(void)context;
 
 	transfer_done = false;
-	twim_err_code = nrfx_twim_tx(&m_twim, ICM_20948_ADD, &address, 1, false);
+	twim_err_code = nrfx_twim_tx(&m_twim, ICM_20948_ADD, &address, 1, true);
 	APP_ERROR_CHECK(twim_err_code);
 
 	wait_for_twi_event();
@@ -108,7 +108,7 @@ void twi_init (void)
 			.scl                = TWI_SCL,
 			.sda                = TWI_SDA,
 			.frequency          = NRF_TWIM_FREQ_400K,
-			.interrupt_priority = APP_IRQ_PRIORITY_LOW,
+			.interrupt_priority = APP_IRQ_PRIORITY_HIGH,
 			.hold_bus_uninit    = false
 	};
 

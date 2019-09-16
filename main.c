@@ -22,7 +22,8 @@
 #include "app_timer.h"
 
 #include "ICM20948_driver_interface.h"
-#include "twi.h"
+#include "Icm20948.h"
+//#include "twi.h"
 
 static void on_error(void)
 {
@@ -111,6 +112,8 @@ int main(void)
 
     for (;;)
     {
+    	if (int1)
+    		inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
         idle_state_handle();
     }
 }

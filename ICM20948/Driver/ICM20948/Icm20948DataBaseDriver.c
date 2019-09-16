@@ -258,18 +258,17 @@ int inv_icm20948_initialize_lower_driver(struct inv_icm20948 * s, enum SMARTSENS
 	// set FIFO watermark to 80% of actual FIFO size
 	result |= dmp_icm20948_set_FIFO_watermark(s, 800);
 
-	// setup interrupts - mine
-	data = 0x82;
-	result |= inv_icm20948_write_mems_reg(s, REG_INT_PIN_CFG, 1, &data); // change polarity & activate by-pass
-	// setup interrupts - mine
-	data = 0x80;
-	result |= inv_icm20948_write_mems_reg(s, REG_INT_PIN_CFG, 1, &data); // change polarity & deactivate by-pass
-
 	// Enable Interrupts.
 	data = 0x2;
 	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE, 1, &data); // Enable DMP Interrupt
 	data = 0x1;
 	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE_2, 1, &data); // Enable FIFO Overflow Interrupt
+
+
+	// setup interrupts - mine
+	data = 0x80;
+	result |= inv_icm20948_write_mems_reg(s, REG_INT_PIN_CFG, 1, &data); // change polarity
+
 
 	// TRACKING : To have accelerometers datas and the interrupt without gyro enables.
 	data = 0XE4;
@@ -304,7 +303,7 @@ int inv_icm20948_initialize_lower_driver(struct inv_icm20948 * s, enum SMARTSENS
 
 	result |= inv_icm20948_sleep_mems(s);   
 
-	NRF_LOG_INFO("result %d", result);
+	NRF_LOG_INFO("low level setup: %d", result);
 	return result;
 }
 
