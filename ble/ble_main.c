@@ -73,7 +73,7 @@
 #define SEC_PARAM_MAX_KEY_SIZE          16                                          /**< Maximum encryption key size. */
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(60000)     		            /**< Battery level measurement interval (ticks). */
-#define TEST_RECORDING_DURATION			APP_TIMER_TICKS(5000)
+#define TEST_RECORDING_DURATION			APP_TIMER_TICKS(10000)
 
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
@@ -683,8 +683,8 @@ static void application_timers_start(void)
     err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
 
-//    err_code = app_timer_start(test_audio_timer, TEST_RECORDING_DURATION, NULL);
-//    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(test_audio_timer, TEST_RECORDING_DURATION, NULL);
+    APP_ERROR_CHECK(err_code);
 
 }
 

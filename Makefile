@@ -86,8 +86,6 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pdm.c \
   $(PROJ_DIR)microphone/sr3_audio/drv_audio_pdm.c \
-  $(PROJ_DIR)microphone/sr3_audio/drv_audio_coder_adpcm.c \
-  $(PROJ_DIR)microphone/dvi_adpcm/dvi_adpcm.c \
   $(PROJ_DIR)main.c \
   $(PROJ_DIR)ble/ble_main.c \
   $(PROJ_DIR)saadc/saadc.c \

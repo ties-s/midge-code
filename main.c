@@ -101,19 +101,25 @@ int main(void)
     saadc_init();
     ble_init();
     APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-//    if (!sd_init())
-//    	drv_audio_init();
+    if (!sd_init())
+    	drv_audio_init();
 
-//    	NRF_LOG_INFO("event data size: %d", APP_TIMER_SCHED_EVENT_DATA_SIZE);
+//    icm20948_init();
 
-    icm20948_init();
+    // If init was ok, blink 3 times
+    nrf_gpio_cfg_output(LED);
+    for (uint8_t l=0;l<7;l++)
+    {
+    	nrf_gpio_pin_toggle(LED);
+    	nrf_delay_ms(200);
+    }
 
     NRF_LOG_INFO("\n\nSPCL test APP start\n");
 
     for (;;)
     {
-    	if (int1)
-    		inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
+//    	if (int1)
+//    		inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
         idle_state_handle();
     }
 }

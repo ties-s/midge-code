@@ -12,21 +12,13 @@
 #include "ff.h"
 #include "drv_audio.h"
 #include "drv_audio_anr.h"
-#include "drv_audio_coder.h"
 #include "app_scheduler.h"
 
 #include "SEGGER_RTT.h"
 
+pdm_buf_t pdm_buf[PDM_BUF_NUM];
+//int16_t sd_buf[PDM_BUF_SIZE] = {};
 
-int16_t  mic_buf[PDM_BUFFER] = {};
-int16_t  mic_buf2[PDM_BUFFER] = {};
-
-m_audio_frame_t   frame_buf;
-
-ret_code_t drv_audio_enable(void)
-{
-	return nrf_drv_pdm_start();
-}
 
 ret_code_t drv_audio_disable(void)
 {
@@ -35,60 +27,68 @@ ret_code_t drv_audio_disable(void)
 
 static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 {
+	ret_code_t err_code;
+//	NRF_LOG_INFO("%d %d %d", p_evt->error, p_evt->buffer_requested, (p_evt->buffer_released == NULL)? 1:0 );
+
 	if (p_evt->error)
 	{
-		NRF_LOG_INFO("pdm handler error %ld", p_evt->error);
+		NRF_LOG_ERROR("pdm handler error %ld", p_evt->error);
 		return;
 	}
 
-	if(p_evt->buffer_requested) {
+	if(p_evt->buffer_released)
+	{
+		// NOTE: As soon as the STARTED event is received, the firmware can write the next SAMPLE.PTR value
+		// (this register is double-buffered), to ensure continuous operation.
 
-//		uint32_t ret;
-		nrfx_pdm_buffer_set(mic_buf, PDM_BUFFER);
-//		NRF_LOG_INFO("buffer req: %d",	ret);
+		for (uint8_t l=0; l<PDM_BUF_NUM; l++)
+		{
+			if (pdm_buf[l].mic_buf == p_evt->buffer_released)
+			{
+//				NRF_LOG_INFO("buf rel: %d", l);
+//				memcpy(sd_buf, p_evt->buffer_released, PDM_BUF_SIZE);
+			    err_code = app_sched_event_put(&l, 1, sd_write);
+			    APP_ERROR_CHECK(err_code);
+				pdm_buf[l].released = true;
+				break;
+			}
+		}
 	}
 
-	if(p_evt->buffer_released) {
-
-
-	    uint8_t nested;
-	    app_util_critical_region_enter(&nested);
-	    drv_audio_coder_encode(p_evt->buffer_released, &frame_buf);
-	    app_util_critical_region_exit(nested);
-
-//		NRF_LOG_INFO("buffer release");
-//		memcpy(mic_buf2,p_evt->buffer_released,sizeof(mic_buf));
-
-//		buf = p_evt->buffer_released;
-	    ret_code_t err_code = app_sched_event_put(NULL, 0, sd_write);
-	    APP_ERROR_CHECK(err_code);
-
-//		NRF_LOG_RAW_HEXDUMP_INFO(mic_buf2, 40);
-//		NRF_LOG_RAW_HEXDUMP_INFO(buf, PDM_BUFFER*2);
-//		NRF_LOG_RAW_INFO("\n");
+	if(p_evt->buffer_requested)
+	{
+		for (uint8_t l=0; l<PDM_BUF_NUM; l++)
+		{
+			if (pdm_buf[l].released)
+			{
+//				NRF_LOG_INFO("buf req: %d", l);
+				err_code = nrfx_pdm_buffer_set(pdm_buf[l].mic_buf, PDM_BUF_SIZE);
+				APP_ERROR_CHECK(err_code);
+				pdm_buf[l].released = false;
+				break;
+			}
+		}
 	}
 }
 
 ret_code_t drv_audio_init(void)
 {
+	for (uint8_t l=0; l<PDM_BUF_NUM; l++)
+	{
+		pdm_buf[l].released = true;
+	}
+
 	nrf_drv_pdm_config_t pdm_cfg = NRF_DRV_PDM_DEFAULT_CONFIG(CONFIG_IO_PDM_CLK, CONFIG_IO_PDM_DATA);
 
-	pdm_cfg.gain_l      = CONFIG_PDM_GAIN;
-	pdm_cfg.gain_r      = CONFIG_PDM_GAIN;
+	pdm_cfg.gain_l      = 0x20;//CONFIG_PDM_GAIN;
+	pdm_cfg.gain_r      = 0x20;//CONFIG_PDM_GAIN;
 
-	pdm_cfg.mode        = NRF_PDM_MODE_MONO;
-//
-//#if   (CONFIG_PDM_MIC == CONFIG_PDM_MIC_LEFT)
+	pdm_cfg.mode        = NRF_PDM_MODE_STEREO;
+	pdm_cfg.clock_freq	= 0x08400000;
+
 //	pdm_cfg.edge        = NRF_PDM_EDGE_LEFTFALLING;
-//#elif (CONFIG_PDM_MIC == CONFIG_PDM_MIC_RIGHT)
 //	pdm_cfg.edge        = NRF_PDM_EDGE_LEFTRISING;
-//#else
-//#error "Value of CONFIG_PDM_MIC is not valid!"
-//#endif /* (CONFIG_PDM_MIC == CONFIG_PDM_MIC_LEFT) */
-
-
 	 nrf_drv_pdm_init(&pdm_cfg, drv_audio_pdm_event_handler);
 
-
-	 return drv_audio_enable();
+	 return nrf_drv_pdm_start();
 }

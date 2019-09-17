@@ -51,16 +51,18 @@
 #include "sdk_errors.h"
 #include "drv_audio_config.h"
 
-typedef struct
-{
-    uint8_t     data[CONFIG_AUDIO_FRAME_SIZE_BYTES];
-    uint16_t    data_size;
-} m_audio_frame_t;
+#define PDM_BUF_NUM 	2
+#define PDM_BUF_SIZE 	2048
 
+typedef struct {
+	int16_t  mic_buf[PDM_BUF_SIZE];
+	bool released;
+} pdm_buf_t;
 
-#define PDM_BUFFER CONFIG_AUDIO_FRAME_SIZE_SAMPLES
-extern int16_t mic_buf2[PDM_BUFFER];
-extern m_audio_frame_t frame_buf;
+extern pdm_buf_t pdm_buf[PDM_BUF_NUM];
+
+//extern int16_t sd_buf[PDM_BUF_SIZE];
+
 
 /**@brief Enable audio source.
  *

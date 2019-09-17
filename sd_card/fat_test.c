@@ -28,9 +28,14 @@ FIL audio_file_handle;
 
 void sd_write(void * p_event_data, uint16_t event_size)
 {
+	if (audio_file_handle.err)
+		return;
+
 	uint32_t bytes_written = 0;
-//	FRESULT ff_result = f_write(&audio_file_handle, mic_buf2, PDM_BUFFER*2, (UINT *) &bytes_written);
-	FRESULT ff_result = f_write(&audio_file_handle, frame_buf.data, frame_buf.data_size, (UINT *) &bytes_written);
+	uint8_t buffer_num = *(uint8_t*)p_event_data;
+//	NRF_LOG_INFO("sd_write: %d", buffer_num);
+	FRESULT ff_result = f_write(&audio_file_handle, pdm_buf[buffer_num].mic_buf, PDM_BUF_SIZE, (UINT *) &bytes_written);
+//	FRESULT ff_result = f_write(&audio_file_handle, sd_buf, PDM_BUF_SIZE, (UINT *) &bytes_written);
 	if (ff_result != FR_OK)
 	{
 		NRF_LOG_INFO("Write failed\r\n.");
@@ -40,15 +45,17 @@ void sd_write(void * p_event_data, uint16_t event_size)
 //		NRF_LOG_INFO("%d bytes written.", bytes_written);
 	}
 	f_sync(&audio_file_handle);
-
-//	NRF_LOG_RAW_HEXDUMP_INFO(mic_buf2, 40);
-//	NRF_LOG_RAW_INFO("\n");
 }
 
 void sd_close(void * p_event_data, uint16_t event_size)
 {
-	NRF_LOG_INFO("sync file: %d", f_sync(&audio_file_handle));
-	NRF_LOG_INFO("close file: %d", f_close(&audio_file_handle));
+	if (f_sync(&audio_file_handle))
+		NRF_LOG_INFO("sync file error during closing");
+	if (f_close(&audio_file_handle))
+		NRF_LOG_INFO("close file error");
+
+	// flag to stop from writing after closing - could look if it is open but would take more time?
+	audio_file_handle.err = 1;
 
 	FRESULT ff_result;
 

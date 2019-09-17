@@ -2106,7 +2106,7 @@
 // <4=> Debug 
 
 #ifndef NRFX_PDM_CONFIG_LOG_LEVEL
-#define NRFX_PDM_CONFIG_LOG_LEVEL 3
+#define NRFX_PDM_CONFIG_LOG_LEVEL 2
 #endif
 
 // <o> NRFX_PDM_CONFIG_INFO_COLOR  - ANSI escape code prefix.
