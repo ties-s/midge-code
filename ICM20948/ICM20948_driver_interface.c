@@ -8,6 +8,7 @@
 #include "boards.h"
 #include "app_timer.h"
 #include "nrf_delay.h"
+#include "app_scheduler.h"
 
 static const uint8_t dmp3_image[] = {
 #include "icm20948_img.dmp3a.h"
@@ -46,30 +47,42 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 {
 	(void)context;
 	float accel[3];
-	int1 = false;
 //	NRF_LOG_INFO("print data, sensor type: %d", sensortype);
 
 	switch(sensortype) {
-	case INV_ICM20948_SENSOR_ACCELEROMETER:
+//	case INV_ICM20948_SENSOR_ACCELEROMETER:
+//		memcpy(accel, data, sizeof(accel));
+//		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+//		break;
+//	case INV_ICM20948_SENSOR_GYROSCOPE:
+//		memcpy(accel, data, sizeof(accel));
+//		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+//		break;
+//	case INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED:
+//		memcpy(accel, data, sizeof(accel));
+//		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+//		break;
+	case INV_ICM20948_SENSOR_ROTATION_VECTOR:
 		memcpy(accel, data, sizeof(accel));
-		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+		NRF_LOG_INFO("q0:"NRF_LOG_FLOAT_MARKER" q1:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
 		break;
 	default:
 		return;
 	}
 }
 
-volatile bool int1 = false;
+void icm20948_service_isr(void * p_event_data, uint16_t event_size)
+{
+	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
+}
+
 
 void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-//	NRF_LOG_INFO("INT1");
-	int1 = true;
-//	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
-
-//	twim_read_register(NULL, 0x2D, raw, 6);
-//	NRF_LOG_INFO("%5d %5d %5d", (int16_t)(raw[0]<<8|raw[1]), (int16_t)(raw[2]<<8|raw[3]), (int16_t)(raw[4]<<8|raw[5]));
-
+	ret_code_t err_code;
+	// isr needs to be fast, so we just push this to the scheduler
+	err_code = app_sched_event_put(NULL, 0, icm20948_service_isr);
+	APP_ERROR_CHECK(err_code);
 }
 
 static void gpiote_init(void)
@@ -247,12 +260,12 @@ void icm20948_init(void)
 //	inv_icm20948_set_offset(&icm_device, unscaled_bias);
 
 	uint8_t err;
-//	for (uint8_t sensor=0; sensor<INV_ICM20948_SENSOR_MAX; sensor++)
-	for (uint8_t sensor=0; sensor<1; sensor++)
+	for (uint8_t sensor=0; sensor<INV_ICM20948_SENSOR_MAX; sensor++)
+//	for (uint8_t sensor=0; sensor<1; sensor++)
 	{
 		err = inv_icm20948_enable_sensor(&icm_device, sensor, 1);
+		err = inv_icm20948_set_sensor_period(&icm_device, sensor, 10);
 	}
-	err = inv_icm20948_set_sensor_period(&icm_device, 0, 10);
 
 	NRF_LOG_INFO("%d",err);
 

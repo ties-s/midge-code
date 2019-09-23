@@ -85,12 +85,12 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spi.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pdm.c \
-  $(PROJ_DIR)microphone/sr3_audio/drv_audio_pdm.c \
   $(PROJ_DIR)main.c \
   $(PROJ_DIR)ble/ble_main.c \
   $(PROJ_DIR)saadc/saadc.c \
   $(PROJ_DIR)twi/twi.c \
   $(PROJ_DIR)sd_card/fat_test.c \
+  $(PROJ_DIR)microphone/drv_audio_pdm.c \
   $(PROJ_DIR)ICM20948/ICM20948_driver_interface.c \
   $(PROJ_DIR)ICM20948/Driver/ICM20948/Icm20948Augmented.c \
   $(PROJ_DIR)ICM20948/Driver/ICM20948/Icm20948AuxCompassAkm.c \
@@ -170,8 +170,6 @@ INC_FOLDERS += \
   twi \
   sd_card \
   microphone \
-  microphone/sr3_audio \
-  microphone/dvi_adpcm \
   ICM20948 \
   ICM20948/Driver \
   ICM20948/Driver/ICM20948 \

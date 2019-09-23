@@ -1,3 +1,4 @@
+#include <drv_audio_pdm.h>
 #include "fat_test.h"
 #include "boards.h"
 #include "ff.h"
@@ -5,9 +6,8 @@
 #include "nrf_block_dev_sdc.h"
 #include "nrf_delay.h"
 #include "nrf_log.h"
-#include "drv_audio.h"
 
-#define FILE_NAME   "clip.wav"
+#define FILE_NAME   "clip"
 
 /**
  * @brief  SDC block device definition
@@ -33,9 +33,8 @@ void sd_write(void * p_event_data, uint16_t event_size)
 
 	uint32_t bytes_written = 0;
 	uint8_t buffer_num = *(uint8_t*)p_event_data;
-//	NRF_LOG_INFO("sd_write: %d", buffer_num);
-	FRESULT ff_result = f_write(&audio_file_handle, pdm_buf[buffer_num].mic_buf, PDM_BUF_SIZE, (UINT *) &bytes_written);
-//	FRESULT ff_result = f_write(&audio_file_handle, sd_buf, PDM_BUF_SIZE, (UINT *) &bytes_written);
+	// size is times two, since this function receives number of bytes, not size of pointer
+	FRESULT ff_result = f_write(&audio_file_handle, pdm_buf[buffer_num].mic_buf, PDM_BUF_SIZE*2, (UINT *) &bytes_written);
 	if (ff_result != FR_OK)
 	{
 		NRF_LOG_INFO("Write failed\r\n.");
@@ -89,13 +88,12 @@ void sd_close(void * p_event_data, uint16_t event_size)
 	}
 	while (fno.fname[0]);
 }
-/**
- * @brief Function for demonstrating FAFTS usage.
- */
+
+
 uint32_t sd_init()
 {
+	//TODO: add checks for CD and SW pins? - return error if sd card not present?
 
-//    uint32_t bytes_written;
     FRESULT ff_result;
     DSTATUS disk_state = STA_NOINIT;
 
@@ -172,23 +170,6 @@ uint32_t sd_init()
     {
     	NRF_LOG_INFO("opened audio file successfully");
     }
-
-//    for (uint8_t p=0;p<50;p++)
-//    {
-////    	nrf_delay_ms(100);
-//    	uint32_t bytes_written = 0;
-//    	uint8_t buf[512];
-//    	FRESULT ff_result = f_write(&audio_file_handle, buf, 130, (UINT *) &bytes_written);
-//    	if (ff_result != FR_OK)
-//    	{
-//    		NRF_LOG_INFO("Write failed\r\n.");
-//    	}
-//    	else
-//    	{
-//    		NRF_LOG_INFO("%d bytes written.", bytes_written);
-//    	}
-//    	f_sync(&audio_file_handle);
-//    }
 
     return 0;
 }

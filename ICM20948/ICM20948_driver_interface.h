@@ -13,12 +13,6 @@
 #define DEF_ST_ACCEL_FS_MG				2000
 #define INV20948_ABS(x) (((x) < 0) ? -(x) : (x))
 
-extern volatile bool int1;
-
-extern inv_icm20948_t icm_device;
-
 void icm20948_init(void);
-void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, const void * data, const void *arg);
-
 
 #endif /* ICM20948_DRIVER_INTERFACE_H_ */

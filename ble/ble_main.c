@@ -39,11 +39,11 @@
 #include "saadc.h"
 #include "nrf_drv_saadc.h"
 
-#include "fat_test.h"
-#include "ff.h"
-#include "drv_audio.h"
-#include "nrf_delay.h"
-#include "app_scheduler.h"
+//#include "fat_test.h"
+//#include "ff.h"
+//#include "drv_audio.h"
+//#include "nrf_delay.h"
+//#include "app_scheduler.h"
 
 
 #define DEVICE_NAME                     "SPCL"              			        /**< Name of device. Will be included in the advertising data. */
@@ -73,7 +73,6 @@
 #define SEC_PARAM_MAX_KEY_SIZE          16                                          /**< Maximum encryption key size. */
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(60000)     		            /**< Battery level measurement interval (ticks). */
-#define TEST_RECORDING_DURATION			APP_TIMER_TICKS(10000)
 
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
@@ -83,7 +82,6 @@ NRF_BLE_QWR_DEF(m_qwr);                                                         
 BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
 
 APP_TIMER_DEF(m_battery_timer_id);                                  				/**< Battery timer. */
-APP_TIMER_DEF(test_audio_timer);
 
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;                            /**< Handle of the current connection. */
 
@@ -304,17 +302,6 @@ static void battery_level_meas_timeout_handler(void * p_context)
 }
 
 
-static void audio_timeout_handler(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-
-    NRF_LOG_INFO("audio timeout");
-    drv_audio_disable();
-
-    ret_code_t err_code = app_sched_event_put(NULL, 0, sd_close);
-    APP_ERROR_CHECK(err_code);
-}
-
 /**@brief Function for initializing timers. */
 void timers_init(void)
 {
@@ -326,14 +313,7 @@ void timers_init(void)
                                 APP_TIMER_MODE_REPEATED,
                                 battery_level_meas_timeout_handler);
     APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_create(&test_audio_timer,
-                                APP_TIMER_MODE_SINGLE_SHOT,
-                                audio_timeout_handler);
-    APP_ERROR_CHECK(err_code);
-
 }
-
 
 
 /**@brief Function for the GAP initialization.
@@ -681,9 +661,6 @@ static void application_timers_start(void)
 
     // Start application timers.
     err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = app_timer_start(test_audio_timer, TEST_RECORDING_DURATION, NULL);
     APP_ERROR_CHECK(err_code);
 
 }
