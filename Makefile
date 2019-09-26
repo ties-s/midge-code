@@ -26,6 +26,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/crc16/crc16.c \
   $(SDK_ROOT)/components/libraries/fds/fds.c \
   $(SDK_ROOT)/components/libraries/util/nrf_assert.c \
+  $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
   $(SDK_ROOT)/components/libraries/atomic_fifo/nrf_atfifo.c \
   $(SDK_ROOT)/components/libraries/atomic_flags/nrf_atflags.c \
   $(SDK_ROOT)/components/libraries/atomic/nrf_atomic.c \
@@ -73,6 +74,8 @@ SRC_FILES += \
   $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu_bonded.c \
   $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu_unbonded.c \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas/ble_bas.c \
+  $(SDK_ROOT)/components/ble/ble_services/ble_nus/ble_nus.c \
+  $(SDK_ROOT)/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
@@ -80,16 +83,18 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/sdcard/app_sdcard.c \
   $(SDK_ROOT)/external/fatfs/port/diskio_blkdev.c \
   $(SDK_ROOT)/external/fatfs/src/ff.c \
+  $(SDK_ROOT)/external/fatfs/src/option/unicode.c \
   $(SDK_ROOT)/components/libraries/block_dev/sdc/nrf_block_dev_sdc.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_spi.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spi.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pdm.c \
+  $(SDK_ROOT)/components/libraries/util/app_error.c \
+  $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
   $(PROJ_DIR)main.c \
-  $(PROJ_DIR)ble/ble_main.c \
   $(PROJ_DIR)saadc/saadc.c \
   $(PROJ_DIR)twi/twi.c \
-  $(PROJ_DIR)sd_card/fat_test.c \
+  $(PROJ_DIR)sd_card/storage.c \
   $(PROJ_DIR)microphone/drv_audio_pdm.c \
   $(PROJ_DIR)ICM20948/ICM20948_driver_interface.c \
   $(PROJ_DIR)ICM20948/Driver/ICM20948/Icm20948Augmented.c \
@@ -104,10 +109,18 @@ SRC_FILES += \
   $(PROJ_DIR)ICM20948/Driver/ICM20948/Icm20948SelfTest.c \
   $(PROJ_DIR)ICM20948/Driver/ICM20948/Icm20948Setup.c \
   $(PROJ_DIR)ICM20948/Driver/ICM20948/Icm20948Transport.c \
-  #$(SDK_ROOT)/components/libraries/util/app_error.c \
-  $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \ 
+  $(PROJ_DIR)rythmbadge/systick_lib.c \
+  $(PROJ_DIR)rythmbadge/timeout_lib.c \
+  $(PROJ_DIR)rythmbadge/system_event_lib.c \
+  $(PROJ_DIR)rythmbadge/ble_lib.c \
+  $(PROJ_DIR)rythmbadge/advertiser_lib.c \
+  $(PROJ_DIR)rythmbadge/protocol_messages_02v1.c \
+  $(PROJ_DIR)rythmbadge/request_handler_lib_02v1.c \
+  $(PROJ_DIR)rythmbadge/sender_lib.c \
+  $(PROJ_DIR)rythmbadge/tinybuf/incl/tinybuf.c \
+  $(PROJ_DIR)rythmbadge/common_messages.c \
+  #$(PROJ_DIR)ble/ble_main.c \
   
-
 # Include folders common to all targets
 INC_FOLDERS += \
   $(SDK_ROOT)/components \
@@ -146,6 +159,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/bootloader/ble_dfu \
   $(SDK_ROOT)/components/libraries/atomic_fifo \
   $(SDK_ROOT)/components/libraries/atomic \
+  $(SDK_ROOT)/components/libraries/fifo \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/integration/nrfx \
@@ -154,6 +168,8 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/atomic_flags \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
   $(SDK_ROOT)/components/ble/ble_services/ble_dfu \
+  $(SDK_ROOT)/components/ble/ble_services/ble_nus \
+  $(SDK_ROOT)/components/ble/ble_link_ctx_manager \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas \
   $(SDK_ROOT)/external/fprintf \
   $(SDK_ROOT)/components/libraries/svc \
@@ -165,7 +181,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/external/protothreads \
   $(SDK_ROOT)/external/protothreads/pt-1.4 \
   config \
-  ble \
   saadc \
   twi \
   sd_card \
@@ -173,7 +188,10 @@ INC_FOLDERS += \
   ICM20948 \
   ICM20948/Driver \
   ICM20948/Driver/ICM20948 \
-
+  rythmbadge/tinybuf/incl \
+  rythmbadge \
+  #ble \
+  
 # Libraries common to all targets
 LIB_FILES += \
 

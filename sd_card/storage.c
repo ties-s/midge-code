@@ -1,5 +1,6 @@
+#include "storage.h"
+
 #include <drv_audio_pdm.h>
-#include "fat_test.h"
 #include "boards.h"
 #include "ff.h"
 #include "diskio_blkdev.h"
@@ -55,7 +56,10 @@ void sd_close(void * p_event_data, uint16_t event_size)
 
 	// flag to stop from writing after closing - could look if it is open but would take more time?
 	audio_file_handle.err = 1;
+}
 
+void list_directory(void)
+{
 	FRESULT ff_result;
 
 	NRF_LOG_INFO("\r\n Listing directory: /");
@@ -90,7 +94,7 @@ void sd_close(void * p_event_data, uint16_t event_size)
 }
 
 
-uint32_t sd_init()
+uint32_t storage_init(void)
 {
 	//TODO: add checks for CD and SW pins? - return error if sd card not present?
 
@@ -113,7 +117,7 @@ uint32_t sd_init()
     if (disk_state)
     {
         NRF_LOG_INFO("Disk initialization failed.");
-        return -1;
+        return 1;
     }
 
     uint32_t blocks_per_mb = (1024uL * 1024uL) / m_block_dev_sdc.block_dev.p_ops->geometry(&m_block_dev_sdc.block_dev)->blk_size;
@@ -125,46 +129,20 @@ uint32_t sd_init()
     if (ff_result)
     {
         NRF_LOG_INFO("Mount failed.");
-        return -2;
+        return 2;
     }
 
-    NRF_LOG_INFO("\r\n Listing directory: /");
-    ff_result = f_opendir(&dir, "/");
-    if (ff_result)
-    {
-        NRF_LOG_INFO("Directory listing failed!");
-        return -3;
-    }
+    list_directory();
 
-    do
-    {
-        ff_result = f_readdir(&dir, &fno);
-        if (ff_result != FR_OK)
-        {
-            NRF_LOG_INFO("Directory read failed.");
-            return -4;
-        }
+    //TODO: think on folder creation. first check if there are any, then create
 
-        if (fno.fname[0])
-        {
-            if (fno.fattrib & AM_DIR)
-            {
-                NRF_LOG_RAW_INFO("   <DIR>   %s\n",(uint32_t)fno.fname);
-            }
-            else
-            {
-                NRF_LOG_RAW_INFO("%9lu  %s\n", fno.fsize, (uint32_t)fno.fname);
-            }
-        }
-    }
-    while (fno.fname[0]);
-    NRF_LOG_RAW_INFO("");
 
+    // TODO: open files only when streaming is started. use timestamp for name - so this should be different function
     ff_result = f_open(&audio_file_handle, FILE_NAME, FA_READ | FA_WRITE | FA_OPEN_ALWAYS);
     if (ff_result != FR_OK)
     {
         NRF_LOG_INFO("Unable to open or create file: " FILE_NAME ".");
-        return -5;
+        return 5;
     }
     else
     {

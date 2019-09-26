@@ -10,107 +10,97 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "nrf_delay.h"
-
-#include "ble_main.h"
-#include "saadc.h"
-#include "nrf_gpio.h"
 #include "boards.h"
-
-#include "fat_test.h"
-
 #include "app_scheduler.h"
-#include "app_timer.h"
 
-#include "ICM20948_driver_interface.h"
-#include "Icm20948.h"
-//#include "twi.h"
+#include "systick_lib.h"
+#include "timeout_lib.h"
+#include "ble_lib.h"
+#include "storage.h"
+#include "advertiser_lib.h"
+#include "request_handler_lib_02v1.h"
 
-static void on_error(void)
-{
-    NRF_LOG_FINAL_FLUSH();
-
-    // To allow the buffer to be flushed by the host.
-    nrf_delay_ms(100);
-
-//    NVIC_SystemReset();
-}
-
-
-void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p_file_name)
-{
-    NRF_LOG_ERROR("Filename:%s:%d  error code: %d", p_file_name, line_num, error_code);
-    on_error();
-}
-
-
-void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
-{
-    NRF_LOG_ERROR("Received a fault! id: 0x%08x, pc: 0x%08x, info: 0x%08x", id, pc, info);
-    on_error();
-}
-
-
-void app_error_handler_bare(uint32_t error_code)
-{
-    NRF_LOG_ERROR("Received an error: 0x%08x!", error_code);
-    on_error();
-}
-
-
-
-static void log_init(void)
-{
-    uint32_t err_code = NRF_LOG_INIT(NULL);
-    APP_ERROR_CHECK(err_code);
-
-    NRF_LOG_DEFAULT_BACKENDS_INIT();
-}
-
-/**@brief Function for the Power manager.
- */
-static void power_management_init(void)
-{
-    uint32_t err_code = nrf_pwr_mgmt_init();
-    APP_ERROR_CHECK(err_code);
-}
-
-
-/**@brief Function for handling the idle state (main loop).
+/**@brief Function that enters a while-true loop if initialization failed.
  *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
+ * @param[in]	ret				Error code from an initialization function.
+ * @param[in]	identifier		Identifier, represents the number of red LED blinks.
+ *
  */
-static void idle_state_handle(void)
-{
-    app_sched_execute();
-    if (NRF_LOG_PROCESS() == false)
-    {
-        nrf_pwr_mgmt_run();
-    }
+void check_init_error(ret_code_t ret, uint8_t identifier) {
+	if(ret == NRF_SUCCESS)
+		return;
+	while(1) {
+		for(uint8_t i = 0; i < identifier; i++) {
+			nrf_gpio_pin_write(LED, LED_ON);  //turn on LED
+			nrf_delay_ms(200);
+			nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
+			nrf_delay_ms(200);
+		}
+		nrf_delay_ms(2000);
+	}
 }
 
-#define SCHED_MAX_EVENT_DATA_SIZE       APP_TIMER_SCHED_EVENT_DATA_SIZE             /**< Maximum size of scheduler events. */
-#define SCHED_QUEUE_SIZE                40                                          /**< Maximum number of events in the scheduler queue. More is needed in case of Serialization. */
-
-
-/**@brief Function for application main entry.
+/**
+ * ============================================== MAIN ====================================================
  */
 int main(void)
 {
-    log_init();
-    power_management_init();
-    saadc_init();
-    ble_init();
-    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-//    if (!sd_init())
-//    	drv_audio_init();
+	ret_code_t ret;
 
-//    icm20948_init();
+    NRF_LOG_INIT(NULL);
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
+
+	nrf_gpio_cfg_output(LED);
+	NRF_LOG_INFO("MAIN: Start...\n\r");
+
+	nrf_pwr_mgmt_init();
+
+//	SOFTDEVICE_HANDLER_INIT(&clock_lf_cfg, NULL);
+	APP_SCHED_INIT(4, 100);
+//	APP_TIMER_INIT(0, 60, NULL); // doing it in systick_init
+
+	ret = systick_init(0);
+	check_init_error(ret, 1);
+
+	ret = timeout_init();
+	check_init_error(ret, 2);
+
+	ret = ble_init();
+	check_init_error(ret, 3);
+
+//	ret = storage_init();
+//	check_init_error(ret, 4);
+
+//	ret = sampling_init();
+//	check_init_error(ret, 5);
+
+	advertiser_init();
+
+	ret = advertiser_start_advertising();
+	check_init_error(ret, 6);
+
+	ret = request_handler_init();
+	check_init_error(ret, 7);
 
 
-    NRF_LOG_INFO("\n\nSPCL test APP start\n");
+	// If initialization was successful, blink the green LED 3 times.
+	for(uint8_t i = 0; i < 3; i++) {
+		nrf_gpio_pin_write(LED, LED_ON);  //turn on LED
+		nrf_delay_ms(100);
+		nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
+		nrf_delay_ms(100);
+	}
 
-    for (;;)
-    {
-        idle_state_handle();
-    }
+	(void) ret;
+
+
+	while(1) {
+		app_sched_execute();
+		if (NRF_LOG_PROCESS() == false) // no more log entries to process
+		{
+			nrf_pwr_mgmt_run();
+		}
+	}
 }
+
+

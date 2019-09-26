@@ -47,6 +47,11 @@
 #include "app_config.h"
 #endif
 
+// APP FIFO ENABLED
+#ifndef APP_FIFO_ENABLED
+#define APP_FIFO_ENABLED 1
+#endif
+
 // <h> Board Support 
 
 //==========================================================
@@ -454,12 +459,12 @@
 // <e> BLE_NUS_ENABLED - ble_nus - Nordic UART Service
 //==========================================================
 #ifndef BLE_NUS_ENABLED
-#define BLE_NUS_ENABLED 0
+#define BLE_NUS_ENABLED 1
 #endif
 // <e> BLE_NUS_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef BLE_NUS_CONFIG_LOG_ENABLED
-#define BLE_NUS_CONFIG_LOG_ENABLED 0
+#define BLE_NUS_CONFIG_LOG_ENABLED 1
 #endif
 // <o> BLE_NUS_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -470,7 +475,7 @@
 // <4=> Debug 
 
 #ifndef BLE_NUS_CONFIG_LOG_LEVEL
-#define BLE_NUS_CONFIG_LOG_LEVEL 3
+#define BLE_NUS_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> BLE_NUS_CONFIG_INFO_COLOR  - ANSI escape code prefix.
