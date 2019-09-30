@@ -136,30 +136,13 @@ void advertiser_set_status_flag_scan_enabled(uint8_t scan_enabled) {
 }
 
 
-void advertiser_set_status_flag_accelerometer_enabled(uint8_t accelerometer_enabled) {
-	if(accelerometer_enabled)
+void advertiser_set_status_flag_imu_enabled(uint8_t imu_enabled) {
+	if(imu_enabled)
 		custom_advdata.status_flags |= (1 << 3);
 	else
 		custom_advdata.status_flags &= ~(1 << 3);
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }
-
-void advertiser_set_status_flag_accelerometer_interrupt_enabled(uint8_t accelerometer_interrupt_enabled) {
-	if(accelerometer_interrupt_enabled)
-		custom_advdata.status_flags |= (1 << 4);
-	else
-		custom_advdata.status_flags &= ~(1 << 4);
-	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
-}
-
-void advertiser_set_status_flag_battery_enabled(uint8_t battery_enabled) {
-	if(battery_enabled)
-		custom_advdata.status_flags |= (1 << 5);
-	else
-		custom_advdata.status_flags &= ~(1 << 5);
-	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
-}
-
 
 
 
@@ -197,14 +180,6 @@ uint8_t advertiser_get_status_flag_scan_enabled(void) {
 }
 
 
-uint8_t advertiser_get_status_flag_accelerometer_enabled(void) {
+uint8_t advertiser_get_status_flag_imu_enabled(void) {
 	return (custom_advdata.status_flags & (1 << 3)) ? 1 : 0;
-}
-
-uint8_t advertiser_get_status_flag_accelerometer_interrupt_enabled(void) {
-	return (custom_advdata.status_flags & (1 << 4)) ? 1 : 0;
-}
-
-uint8_t advertiser_get_status_flag_battery_enabled(void) {
-	return (custom_advdata.status_flags & (1 << 5)) ? 1 : 0;
 }

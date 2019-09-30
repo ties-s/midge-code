@@ -19,6 +19,8 @@
 #include "storage.h"
 #include "advertiser_lib.h"
 #include "request_handler_lib_02v1.h"
+#include "sampling_lib.h"
+
 
 /**@brief Function that enters a while-true loop if initialization failed.
  *
@@ -51,6 +53,8 @@ int main(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
 	nrf_gpio_cfg_output(LED);
+	nrf_gpio_pin_write(LED, LED_OFF);
+
 	NRF_LOG_INFO("MAIN: Start...\n\r");
 
 	nrf_pwr_mgmt_init();
@@ -68,11 +72,11 @@ int main(void)
 	ret = ble_init();
 	check_init_error(ret, 3);
 
-//	ret = storage_init();
-//	check_init_error(ret, 4);
+	ret = storage_init();
+	check_init_error(ret, 4);
 
-//	ret = sampling_init();
-//	check_init_error(ret, 5);
+	ret = sampling_init();
+	check_init_error(ret, 5);
 
 	advertiser_init();
 
@@ -90,9 +94,6 @@ int main(void)
 		nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
 		nrf_delay_ms(100);
 	}
-
-	(void) ret;
-
 
 	while(1) {
 		app_sched_execute();

@@ -72,23 +72,13 @@ void advertiser_set_status_flag_microphone_enabled(uint8_t microphone_enabled);
  */
 void advertiser_set_status_flag_scan_enabled(uint8_t scan_enabled);
 
-/**@brief Function to set the accelerometer_enabled-status flag of the advertising-packet.
+/**@brief Function to set the imu_enabled-status flag of the advertising-packet.
  *
- * @param[in]	accelerometer_enabled			Flag if accelerometer is enabled.
+ * @param[in]	imu_enabled			Flag if imu is enabled.
  */
-void advertiser_set_status_flag_accelerometer_enabled(uint8_t accelerometer_enabled);
+void advertiser_set_status_flag_imu_enabled(uint8_t imu_enabled);
 
-/**@brief Function to set the accelerometer_interrupt_enabled-status flag of the advertising-packet.
- *
- * @param[in]	accelerometer_interrupt_enabled		Flag if accelerometer interrupt is enabled.
- */
-void advertiser_set_status_flag_accelerometer_interrupt_enabled(uint8_t accelerometer_interrupt_enabled);
 
-/**@brief Function to set the battery_enabled-status flag of the advertising-packet.
- *
- * @param[in]	battery_enabled		Flag if battery is enabled.
- */
-void advertiser_set_status_flag_battery_enabled(uint8_t battery_enabled);
 
 
 /**@brief Function to retrieve the own badge-assignment.
@@ -133,26 +123,13 @@ uint8_t advertiser_get_status_flag_microphone_enabled(void);
  */
 uint8_t advertiser_get_status_flag_scan_enabled(void);
 
-/**@brief Function to retrieve the accelerometer-status flag of the advertising-packet.
+/**@brief Function to retrieve the imu-status flag of the advertising-packet.
  *
- * @retval 	0			If accelerometer is not enabled.
- * @retval 	1			If accelerometer_ is enabled.
+ * @retval 	0			If imu is not enabled.
+ * @retval 	1			If imu is enabled.
  */
-uint8_t advertiser_get_status_flag_accelerometer_enabled(void);
+uint8_t advertiser_get_status_flag_imu_enabled(void);
 
-/**@brief Function to retrieve the accelerometer_interrupt-status flag of the advertising-packet.
- *
- * @retval 	0			If accelerometer_interrupt is not enabled.
- * @retval 	1			If accelerometer_interrupt is enabled.
- */
-uint8_t advertiser_get_status_flag_accelerometer_interrupt_enabled(void);
-
-/**@brief Function to retrieve the battery-status flag of the advertising-packet.
- *
- * @retval 	0			If battery is not enabled.
- * @retval 	1			If battery is enabled.
- */
-uint8_t advertiser_get_status_flag_battery_enabled(void);
 
 
 #endif

@@ -114,11 +114,9 @@ SRC_FILES += \
   $(PROJ_DIR)rythmbadge/system_event_lib.c \
   $(PROJ_DIR)rythmbadge/ble_lib.c \
   $(PROJ_DIR)rythmbadge/advertiser_lib.c \
-  $(PROJ_DIR)rythmbadge/protocol_messages_02v1.c \
   $(PROJ_DIR)rythmbadge/request_handler_lib_02v1.c \
   $(PROJ_DIR)rythmbadge/sender_lib.c \
-  $(PROJ_DIR)rythmbadge/tinybuf/incl/tinybuf.c \
-  $(PROJ_DIR)rythmbadge/common_messages.c \
+  $(PROJ_DIR)rythmbadge/sampling_lib.c \
   #$(PROJ_DIR)ble/ble_main.c \
   
 # Include folders common to all targets
@@ -188,7 +186,6 @@ INC_FOLDERS += \
   ICM20948 \
   ICM20948/Driver \
   ICM20948/Driver/ICM20948 \
-  rythmbadge/tinybuf/incl \
   rythmbadge \
   #ble \
   

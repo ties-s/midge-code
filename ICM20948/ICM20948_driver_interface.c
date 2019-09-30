@@ -9,12 +9,15 @@
 #include "app_timer.h"
 #include "nrf_delay.h"
 #include "app_scheduler.h"
+#include "storage.h"
 
 static const uint8_t dmp3_image[] = {
 #include "icm20948_img.dmp3a.h"
 };
 
 inv_icm20948_t icm_device;
+accel_sample_t accel_sample;
+
 
 static const float cfg_mounting_matrix[9]= {
 	1.f, 0, 0,
@@ -30,42 +33,104 @@ static void icm20948_apply_mounting_matrix(void){
 	}
 }
 
-/* FSR configurations */
-int32_t cfg_acc_fsr = 4; // Default = +/- 4g. Valid ranges: 2, 4, 8, 16
-int32_t cfg_gyr_fsr = 2000; // Default = +/- 2000dps. Valid ranges: 250, 500, 1000, 2000
+ret_code_t icm20948_set_fsr(uint16_t acc_fsr, uint16_t gyr_fsr)
+{
+	ret_code_t err = NRF_SUCCESS;
 
-static void icm20948_set_fsr(void){
-	inv_icm20948_set_fsr(&icm_device, INV_ICM20948_SENSOR_RAW_ACCELEROMETER, (const void *)&cfg_acc_fsr);
-	inv_icm20948_set_fsr(&icm_device, INV_ICM20948_SENSOR_ACCELEROMETER, (const void *)&cfg_acc_fsr);
-	inv_icm20948_set_fsr(&icm_device, INV_ICM20948_SENSOR_RAW_GYROSCOPE, (const void *)&cfg_gyr_fsr);
-	inv_icm20948_set_fsr(&icm_device, INV_ICM20948_SENSOR_GYROSCOPE, (const void *)&cfg_gyr_fsr);
-	inv_icm20948_set_fsr(&icm_device, INV_ICM20948_SENSOR_GYROSCOPE_UNCALIBRATED, (const void *)&cfg_gyr_fsr);
+	err = inv_icm20948_set_fsr(&icm_device, INV_ICM20948_SENSOR_ACCELEROMETER, (const void *)&acc_fsr);
+	err |= inv_icm20948_set_fsr(&icm_device, INV_ICM20948_SENSOR_GYROSCOPE, (const void *)&gyr_fsr);
+
+	return err;
+}
+
+ret_code_t icm20948_disable_sensors(void)
+{
+	ret_code_t err = NRF_SUCCESS;
+
+	for (uint8_t sensor=0; sensor<INV_ICM20948_SENSOR_MAX; sensor++)
+		err |= inv_icm20948_enable_sensor(&icm_device, sensor, 0);
+
+	nrfx_gpiote_in_event_disable(INT1_PIN);
+
+	return err;
+}
+
+ret_code_t icm20948_enable_sensors(void)
+{
+	ret_code_t err = NRF_SUCCESS;
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ACCELEROMETER, 1);
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_ACCELEROMETER, 1);
+
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GYROSCOPE, 1);
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_GYROSCOPE, 1);
+
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD, 1);
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED, 1);
+
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ROTATION_VECTOR, 1);
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR, 1);
+	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR, 1);
+
+	nrfx_gpiote_in_event_enable(INT1_PIN, true);
+
+	return err;
+}
+
+ret_code_t icm20948_set_datarate(uint8_t datarate)
+{
+	ret_code_t err = NRF_SUCCESS;
+
+	for (uint8_t sensor=0; sensor<INV_ICM20948_SENSOR_MAX; sensor++)
+		err |= inv_icm20948_set_sensor_period(&icm_device, sensor, 1000/datarate);
+
+	return err;
 }
 
 
 void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, const void * data, const void *arg)
 {
+	ret_code_t err_code;
 	(void)context;
-	float accel[3];
+	data_source_info_t data_source_info;
+	data_source_info.data_source = IMU;
+//	long accel_raw[3];
 //	NRF_LOG_INFO("print data, sensor type: %d", sensortype);
 
 	switch(sensortype) {
-//	case INV_ICM20948_SENSOR_ACCELEROMETER:
-//		memcpy(accel, data, sizeof(accel));
+	case INV_ICM20948_SENSOR_ACCELEROMETER:
+		memcpy(accel_sample.accel, data, sizeof(accel_sample.accel));
 //		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+//		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]));
+//		NRF_LOG_HEXDUMP_INFO(data, 4);
+//		NRF_LOG_INFO("time: %ld", timestamp);
+
+		data_source_info.imu_source = ACCEL;
+		accel_sample.timestamp = timestamp;
+		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
+		APP_ERROR_CHECK(err_code);
+		break;
+//	case INV_ICM20948_SENSOR_RAW_ACCELEROMETER:
+//		memcpy(accel_raw, data, sizeof(accel_raw));
+//		NRF_LOG_INFO("x: %ld",accel_raw[0]);
+//		NRF_LOG_HEXDUMP_INFO(data, 4);
+////		NRF_LOG_INFO("time: %ld", timestamp);
 //		break;
+
 //	case INV_ICM20948_SENSOR_GYROSCOPE:
-//		memcpy(accel, data, sizeof(accel));
-//		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+////		memcpy(accel, data, sizeof(accel));
+////		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+//		NRF_LOG_INFO("time: %ld", timestamp);
 //		break;
 //	case INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED:
-//		memcpy(accel, data, sizeof(accel));
-//		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+////		memcpy(accel, data, sizeof(accel));
+////		NRF_LOG_INFO("x:"NRF_LOG_FLOAT_MARKER" y:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+//		NRF_LOG_INFO("time: %ld", timestamp);
 //		break;
-	case INV_ICM20948_SENSOR_ROTATION_VECTOR:
-		memcpy(accel, data, sizeof(accel));
-		NRF_LOG_INFO("q0:"NRF_LOG_FLOAT_MARKER" q1:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
-		break;
+//	case INV_ICM20948_SENSOR_ROTATION_VECTOR:
+////		memcpy(accel, data, sizeof(accel));
+////		NRF_LOG_INFO("q0:"NRF_LOG_FLOAT_MARKER" q1:"NRF_LOG_FLOAT_MARKER, NRF_LOG_FLOAT(accel[0]), NRF_LOG_FLOAT(accel[1]));
+//		NRF_LOG_INFO("time: %ld", timestamp);
+//		break;
 	default:
 		return;
 	}
@@ -85,26 +150,27 @@ void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 	APP_ERROR_CHECK(err_code);
 }
 
-static void gpiote_init(void)
+ret_code_t gpiote_init(void)
 {
-	ret_code_t err_code;
+	ret_code_t err_code = NRF_SUCCESS;
 
 	err_code = nrfx_gpiote_init();
-	APP_ERROR_CHECK(err_code);
+	if (err_code) return err_code;
 
 	nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
 	in_config.pull = NRF_GPIO_PIN_PULLUP;
 
 	err_code = nrfx_gpiote_in_init(INT1_PIN, &in_config, int_pin_handler);
-	APP_ERROR_CHECK(err_code);
+	if (err_code) return err_code;
 
+	return 0;
 }
 
-static void icm20948_sensor_setup()
+static uint32_t icm20948_sensor_setup()
 {
 	uint8_t whoami, result;
 	result = inv_icm20948_get_whoami(&icm_device, &whoami);
-	NRF_LOG_INFO("whoami: %x", whoami);
+//	NRF_LOG_INFO("whoami: %x", whoami);
 
 	inv_icm20948_soft_reset(&icm_device);
 	inv_icm20948_sleep_us(500000);
@@ -118,14 +184,12 @@ static void icm20948_sensor_setup()
 	inv_icm20948_register_aux_compass( &icm_device, INV_ICM20948_COMPASS_ID_AK09916, AK0991x_DEFAULT_I2C_ADDR);
 	result |= inv_icm20948_initialize_auxiliary(&icm_device);
 
-
-	icm20948_set_fsr();
+//	icm20948_set_fsr(); will be set when we start the sensor
 
 	/* re-initialize base state structure */
 	result |= inv_icm20948_init_structure(&icm_device);
 
-	if (result)
-		NRF_LOG_ERROR("setup sensor");
+	return result;
 }
 
 void inv_icm20948_get_st_bias(struct inv_icm20948 * s, int *gyro_bias, int *accel_bias, int * st_bias, int * unscaled){
@@ -229,10 +293,14 @@ int icm20948_run_selftest(void){
 	return rc;
 }
 
-void icm20948_init(void)
+ret_code_t icm20948_init(void)
 {
+	uint32_t err;
+
 	twi_init();
-	gpiote_init();
+	err = gpiote_init();
+	if (err) return -err;
+
 	/*
 	 * Initialize icm20948 serif structure
 	 */
@@ -246,11 +314,8 @@ void icm20948_init(void)
 
 	inv_icm20948_reset_states(&icm_device, &icm20948_serif);
 
-//	inv_icm20948_register_aux_compass(&icm_device, INV_ICM20948_COMPASS_ID_AK09916, AK0991x_DEFAULT_I2C_ADDR);
-
-	icm20948_sensor_setup();
-
-//	inv_icm20948_load(&icm_device, dmp3_image, sizeof(dmp3_image));
+	 err = icm20948_sensor_setup();
+	 if (err) return -err;
 
 //	if(icm20948_run_selftest())
 //	{
@@ -259,17 +324,7 @@ void icm20948_init(void)
 //	}
 //	inv_icm20948_set_offset(&icm_device, unscaled_bias);
 
-	uint8_t err;
-	for (uint8_t sensor=0; sensor<INV_ICM20948_SENSOR_MAX; sensor++)
-//	for (uint8_t sensor=0; sensor<1; sensor++)
-	{
-		err = inv_icm20948_enable_sensor(&icm_device, sensor, 1);
-		err = inv_icm20948_set_sensor_period(&icm_device, sensor, 10);
-	}
-
-	NRF_LOG_INFO("%d",err);
-
-	nrfx_gpiote_in_event_enable(INT1_PIN, true);
+	 return NRF_SUCCESS;
 }
 
 uint64_t inv_icm20948_get_time_us(void)

@@ -303,7 +303,8 @@ ret_code_t sender_transmit(const uint8_t* data, uint32_t len, uint32_t timeout_m
 }
 
 
-void sender_disconnect(void) {
+void sender_disconnect(void)
+{
 	//NRF_LOG_INFO("SENDER: sender_disconnect()-called\n");
 	sender_reset();
 	ble_disconnect();

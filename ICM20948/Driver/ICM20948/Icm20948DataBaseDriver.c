@@ -303,7 +303,7 @@ int inv_icm20948_initialize_lower_driver(struct inv_icm20948 * s, enum SMARTSENS
 
 	result |= inv_icm20948_sleep_mems(s);   
 
-	NRF_LOG_INFO("low level setup: %d", result);
+//	NRF_LOG_INFO("low level setup: %d", result);
 	return result;
 }
 

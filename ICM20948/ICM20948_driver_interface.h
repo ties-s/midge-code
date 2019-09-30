@@ -13,6 +13,17 @@
 #define DEF_ST_ACCEL_FS_MG				2000
 #define INV20948_ABS(x) (((x) < 0) ? -(x) : (x))
 
-void icm20948_init(void);
+typedef struct{
+	uint64_t timestamp;
+	float accel[3];
+} accel_sample_t;
+
+extern accel_sample_t accel_sample;
+
+ret_code_t icm20948_init(void);
+ret_code_t icm20948_set_fsr(uint16_t acc_fsr, uint16_t gyr_fsr);
+ret_code_t icm20948_set_datarate(uint8_t datarate);
+ret_code_t icm20948_enable_sensors(void);
+ret_code_t icm20948_disable_sensors(void);
 
 #endif /* ICM20948_DRIVER_INTERFACE_H_ */

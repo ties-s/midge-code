@@ -11,16 +11,9 @@
 
 
 typedef enum {
-	SAMPLING_ACCELEROMETER 				= (1 << 0),
-	STREAMING_ACCELEROMETER				= (1 << 1),
-	SAMPLING_ACCELEROMETER_INTERRUPT 	= (1 << 2),
-	STREAMING_ACCELEROMETER_INTERRUPT 	= (1 << 3),
-	SAMPLING_BATTERY 					= (1 << 4),
-	STREAMING_BATTERY 					= (1 << 5),
-	SAMPLING_MICROPHONE 				= (1 << 6),
-	STREAMING_MICROPHONE 				= (1 << 7),
-	SAMPLING_SCAN 						= (1 << 8),
-	STREAMING_SCAN 						= (1 << 9),
+	SAMPLING_IMU		 				= (1 << 0),
+	SAMPLING_MICROPHONE 				= (1 << 1),
+	SAMPLING_SCAN 						= (1 << 2),
 } sampling_configuration_t;
 
 
@@ -50,84 +43,25 @@ ret_code_t sampling_init(void);
  */
 sampling_configuration_t sampling_get_sampling_configuration(void);
 
-/**@brief Function to retrieve the current sampling-/streaming-configuration (So which data-sources are currently sampling).
- *
- * @retval 	The current sampling-configuration.
- */
-void sampling_reset_timeouts(void);
 
-
-/**@brief Function to start the accelerometer data recording or streaming.
+/**@brief Function to start the accelerometer
  *
- * @param[in]	timeout_ms 					The timeout for the accelerometer in milliseconds (0 --> no timeout).
- * @param[in]	operating_mode 				[0 == power_down, 1 == low_power, 2 == normal, 3 == high_resolution]
  * @param[in]	full_scale					[2, 4, 8, 16]
  * @param[in]	datrate						[1, 10, 25, 50, 100, 200, 400]
- * @param[in]	fifo_sampling_period_ms		The sampling period in ms of the accelerometer output FIFO.
- * @param[in]	streaming					Flag if streaming or data acquisition should be enabled [0 == data-acquisistion, 1 == streaming].
  *
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
  */
-ret_code_t sampling_start_accelerometer(uint32_t timeout_ms, uint8_t operating_mode, uint8_t full_scale, uint16_t datarate, uint16_t fifo_sampling_period_ms, uint8_t streaming);
+ret_code_t sampling_start_imu(uint16_t acc_fsr, uint16_t gyr_fsr, uint16_t datarate);
 
-/**@brief Function to stop the accelerometer data recording or streaming.
+/**@brief Function to stop the imu
  *
  * @param[in]	streaming					Flag if streaming or data acquisition should be stopped [0 == data-acquisistion, 1 == streaming].
  *
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
  */
-ret_code_t sampling_stop_accelerometer(uint8_t streaming);
-
-
-
-
-/**@brief Function to start the accelerometer data recording or streaming.
- *
- * @param[in]	timeout_ms 					The timeout for the accelerometer-interrupt in milliseconds (0 --> no timeout).
- * @param[in]	threshold_mg 				The threshold in mg that has to be exceeded to generate an interrupt.
- * @param[in]	minimal_duration_ms 		The minimal duration the acceleration has to exceed the threshold to generate an interrupt.
- * @param[in]	ignore_duration_ms 			The time after an interrupt where new interrupt should be ignored.
- * @param[in]	streaming					Flag if streaming or data acquisition should be enabled [0 == data-acquisistion, 1 == streaming].
- *
- * @retval		NRF_SUCCESS 	If everything was ok.
- * @retval						Otherwise an error code is returned.
- */
-ret_code_t sampling_start_accelerometer_interrupt(uint32_t timeout_ms, uint16_t threshold_mg, uint16_t minimal_duration_ms, uint32_t ignore_duration_ms, uint8_t streaming);
-
-/**@brief Function to stop the accelerometer-interrupt data recording or streaming.
- *
- * @param[in]	streaming					Flag if streaming or data acquisition should be stopped [0 == data-acquisistion, 1 == streaming].
- *
- * @retval		NRF_SUCCESS 	If everything was ok.
- * @retval						Otherwise an error code is returned.
- */
-ret_code_t sampling_stop_accelerometer_interrupt(uint8_t streaming);
-
-
-
-
-/**@brief Function to start the battery data recording or streaming.
- *
- * @param[in]	timeout_ms 					The timeout for the battery in milliseconds  (0 --> no timeout).
- * @param[in]	period_ms 					The period at which the battery-sampling should be done.
- * @param[in]	streaming					Flag if streaming or data acquisition should be enabled [0 == data-acquisistion, 1 == streaming].
- *
- * @retval		NRF_SUCCESS 	If everything was ok.
- * @retval						Otherwise an error code is returned.
- */
-ret_code_t sampling_start_battery(uint32_t timeout_ms, uint32_t period_ms, uint8_t streaming);
-
-/**@brief Function to stop the battery data recording or streaming.
- *
- * @param[in]	streaming					Flag if streaming or data acquisition should be stopped [0 == data-acquisistion, 1 == streaming].
- *
- * @retval		NRF_SUCCESS 	If everything was ok.
- * @retval						Otherwise an error code is returned.
- */
-void	   sampling_stop_battery(uint8_t streaming);
-
+ret_code_t sampling_stop_imu(void);
 
 
 
@@ -141,7 +75,7 @@ void	   sampling_stop_battery(uint8_t streaming);
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
  */
-ret_code_t sampling_start_microphone(uint32_t timeout_ms, uint16_t period_ms, uint8_t streaming);
+ret_code_t sampling_start_microphone(void);
 
 /**@brief Function to stop the microphone data recording or streaming.
  *
@@ -150,7 +84,7 @@ ret_code_t sampling_start_microphone(uint32_t timeout_ms, uint16_t period_ms, ui
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
  */
-void	   sampling_stop_microphone(uint8_t streaming);
+ret_code_t sampling_stop_microphone(void);
 
 
 

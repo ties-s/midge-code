@@ -7,8 +7,9 @@
 #include "nrf_block_dev_sdc.h"
 #include "nrf_delay.h"
 #include "nrf_log.h"
-
-#define FILE_NAME   "clip"
+#include "nrf_gpio.h"
+#include "ICM20948_driver_interface.h"
+#include "systick_lib.h"
 
 /**
  * @brief  SDC block device definition
@@ -26,36 +27,64 @@ FATFS fs;
 DIR dir;
 FILINFO fno;
 FIL audio_file_handle;
+FIL accel_file_handle;
 
 void sd_write(void * p_event_data, uint16_t event_size)
 {
-	if (audio_file_handle.err)
-		return;
-
+	data_source_info_t data_source_info = *(data_source_info_t *)p_event_data;
 	uint32_t bytes_written = 0;
-	uint8_t buffer_num = *(uint8_t*)p_event_data;
-	// size is times two, since this function receives number of bytes, not size of pointer
-	FRESULT ff_result = f_write(&audio_file_handle, pdm_buf[buffer_num].mic_buf, PDM_BUF_SIZE*2, (UINT *) &bytes_written);
-	if (ff_result != FR_OK)
+
+	if (data_source_info.data_source == AUDIO && !audio_file_handle.err)
 	{
-		NRF_LOG_INFO("Write failed\r\n.");
+		// size is times two, since this function receives number of bytes, not size of pointer
+		FRESULT ff_result = f_write(&audio_file_handle, pdm_buf[data_source_info.audio_buffer_num].mic_buf, PDM_BUF_SIZE*2, (UINT *) &bytes_written);
+		if (ff_result != FR_OK)
+		{
+			NRF_LOG_INFO("Audio write to sd failed.");
+		}
+		f_sync(&audio_file_handle);
 	}
-	else
+	else if (data_source_info.data_source == IMU && !accel_file_handle.err)
 	{
-//		NRF_LOG_INFO("%d bytes written.", bytes_written);
+		FRESULT ff_result = f_printf(&accel_file_handle, "%ld %f %f %f", accel_sample.timestamp, accel_sample.accel[0], accel_sample.accel[1], accel_sample.accel[2]);
+		if (ff_result != FR_OK)
+		{
+			NRF_LOG_INFO("Accel data write to sd failed.");
+		}
+		f_sync(&accel_file_handle);
 	}
-	f_sync(&audio_file_handle);
 }
 
-void sd_close(void * p_event_data, uint16_t event_size)
+uint32_t storage_close_file(data_source_t source)
 {
-	if (f_sync(&audio_file_handle))
-		NRF_LOG_INFO("sync file error during closing");
-	if (f_close(&audio_file_handle))
-		NRF_LOG_INFO("close file error");
+	FIL file;
+	FRESULT ff_result;
 
-	// flag to stop from writing after closing - could look if it is open but would take more time?
-	audio_file_handle.err = 1;
+	if (source == AUDIO)
+	{
+		file = audio_file_handle;
+		audio_file_handle.err = 1;
+	}
+	else if (source == IMU)
+	{
+		file = accel_file_handle;
+		accel_file_handle.err = 1;
+	}
+
+	ff_result = f_sync(&file);
+	if (ff_result)
+	{
+		NRF_LOG_INFO("sync file error during closing");
+		return -1;
+	}
+	ff_result = f_close(&file);
+	if (ff_result)
+	{
+		NRF_LOG_INFO("close file error");
+		return -1;
+	}
+
+	return 0;
 }
 
 void list_directory(void)
@@ -97,6 +126,7 @@ void list_directory(void)
 uint32_t storage_init(void)
 {
 	//TODO: add checks for CD and SW pins? - return error if sd card not present?
+	// don't need to since if there is no sd card, init will fail under here.
 
     FRESULT ff_result;
     DSTATUS disk_state = STA_NOINIT;
@@ -133,21 +163,64 @@ uint32_t storage_init(void)
     }
 
     list_directory();
+    return 0;
+}
 
-    //TODO: think on folder creation. first check if there are any, then create
+uint32_t storage_init_folder(uint32_t sync_time_seconds)
+{
+	NRF_LOG_INFO("open folder");
+	FRESULT ff_result;
 
+	TCHAR folder[10] = {};
+	sprintf(folder, "/%ld", sync_time_seconds);
+	ff_result = f_mkdir(folder);
+	if (ff_result)
+	{
+		NRF_LOG_INFO("Making of new directory failed!");
+		return -1;
+	}
 
-    // TODO: open files only when streaming is started. use timestamp for name - so this should be different function
-    ff_result = f_open(&audio_file_handle, FILE_NAME, FA_READ | FA_WRITE | FA_OPEN_ALWAYS);
-    if (ff_result != FR_OK)
-    {
-        NRF_LOG_INFO("Unable to open or create file: " FILE_NAME ".");
-        return 5;
-    }
-    else
-    {
-    	NRF_LOG_INFO("opened audio file successfully");
-    }
+	ff_result = f_chdir(folder);
+	if (ff_result)
+	{
+		NRF_LOG_INFO("Changing into new directory failed!");
+		return -1;
+	}
+
+	return 0;
+}
+
+uint32_t storage_open_file(data_source_t source)
+{
+	FRESULT ff_result;
+
+	uint32_t seconds;
+	uint16_t milliseconds;
+	systick_get_timestamp(&seconds, &milliseconds);
+	TCHAR filename[20] = {};
+
+	if (source == AUDIO)
+	{
+		sprintf(filename, "%ld_%d_audio", seconds, milliseconds);
+	    ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
+	    if (ff_result != FR_OK)
+	    {
+	        NRF_LOG_INFO("Unable to open or create file: %s", filename);
+	        return -1;
+	    }
+		audio_file_handle.err = 0;
+	}
+	if (source == IMU)
+	{
+		sprintf(filename, "%ld_%d_accel", seconds, milliseconds);
+		ff_result = f_open(&accel_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
+		if (ff_result != FR_OK)
+		{
+			NRF_LOG_INFO("Unable to open or create file: %s", filename);
+			return -1;
+		}
+		accel_file_handle.err = 0;
+	}
 
     return 0;
 }

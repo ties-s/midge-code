@@ -3,6 +3,7 @@
 #include "app_timer.h"
 #include "app_util_platform.h"	// Needed for the definitions of CRITICAL_REGION_EXIT/-ENTER
 #include "nrf_log.h"
+#include "storage.h" // for creating folders after time sync
 
 
 #define SYSTICK_TIMER_CALLBACK_PERIOD_MS (100*1000)
@@ -18,6 +19,9 @@ static volatile uint64_t ticks_at_offset = 0;				/**< The ticks at the millis_of
 static volatile float millis_per_ticks = (1000.0f / ((0 + 1) * APP_TIMER_CLOCK_FREQ));		/**< Variable that represents the millis per ticks. It is the slope of the straigtline equation.*/
 static float millis_per_ticks_default = (1000.0f / ((0 + 1) * APP_TIMER_CLOCK_FREQ));		/**< Variable that represents the default millis per ticks. It is the slope of the straigtline equation (needed for systick_get_continous_millis()).*/
 
+// if we sync for the first time, create file structure on sd card
+static volatile bool time_sync_done;
+
 // +/- 20ppm oscillator --> +/- 0.655 Hz deviation. But we are conservative --> up to 50Hz deviation possible
 // default millis per ticks: 0.03051757812
 
@@ -29,6 +33,7 @@ static void systick_callback(void* p_context);
 
 ret_code_t systick_init(uint8_t prescaler) {
 	static uint8_t init_done = 0;
+	time_sync_done = false;
 	
 	if(!init_done) {
 		ret_code_t ret;
@@ -177,9 +182,17 @@ void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync
 	return;
 }
 
-void systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_sync, uint16_t milliseconds_sync) {
+void systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_sync, uint16_t milliseconds_sync)
+{
 	uint64_t millis_sync = ((uint64_t)seconds_sync) * 1000 + ((uint64_t) milliseconds_sync);
 	systick_set_millis(ticks_since_start_at_sync, millis_sync);
+
+	if (!time_sync_done)
+	{
+		time_sync_done = true;
+		if (storage_init_folder(seconds_sync))
+			NRF_LOG_ERROR("wat werror");
+	}
 }
 
 uint64_t systick_get_millis(void) {

@@ -15,34 +15,13 @@
 #include "SEGGER_RTT.h"
 #include "nrf_delay.h"
 #include "boards.h"
+#include "storage.h"
+
+ret_code_t err_code;
 
 pdm_buf_t pdm_buf[PDM_BUF_NUM];
 static uint16_t skip_samples;
-ret_code_t err_code;
-
-// test duration
-#define TEST_RECORDING_DURATION			APP_TIMER_TICKS(30000)
-
-APP_TIMER_DEF(test_audio_timer);
-
-
-static void audio_timeout_handler(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-
-    NRF_LOG_INFO("audio timeout");
-    nrf_drv_pdm_stop();
-
-    ret_code_t err_code = app_sched_event_put(NULL, 0, sd_close);
-    APP_ERROR_CHECK(err_code);
-
-    nrf_gpio_cfg_output(LED);
-    for (uint8_t l=0;l<6;l++)
-    {
-    	nrf_gpio_pin_toggle(LED);
-    	nrf_delay_ms(100);
-    }
-}
+data_source_info_t data_source_info;
 
 
 static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
@@ -68,7 +47,8 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 				}
 				else
 				{
-					err_code = app_sched_event_put(&l, 1, sd_write);
+					data_source_info.audio_buffer_num = l;
+					err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
 					APP_ERROR_CHECK(err_code);
 				}
 				break;
@@ -98,6 +78,7 @@ ret_code_t drv_audio_init(void)
 	{
 		pdm_buf[l].released = true;
 	}
+	data_source_info.data_source = AUDIO;
 
 	nrf_drv_pdm_config_t pdm_cfg = NRF_DRV_PDM_DEFAULT_CONFIG(MIC_CLK, MIC_DOUT);
 
@@ -115,24 +96,7 @@ ret_code_t drv_audio_init(void)
 	// divide by 2 for MONO
 	if (pdm_cfg.mode) skip_samples = skip_samples/2;
 
-	// timer to stop sampling - should remove later
-    err_code = app_timer_create(&test_audio_timer,
-                                APP_TIMER_MODE_SINGLE_SHOT,
-                                audio_timeout_handler);
-    APP_ERROR_CHECK(err_code);
-
-    // start recording
-	nrf_drv_pdm_start();
-    err_code = app_timer_start(test_audio_timer, TEST_RECORDING_DURATION, NULL);
-
-    nrf_gpio_cfg_output(LED);
-    for (uint8_t l=0;l<5;l++)
-    {
-    	nrf_gpio_pin_toggle(LED);
-    	nrf_delay_ms(100);
-    }
-    APP_ERROR_CHECK(err_code);
-
+//	nrf_drv_pdm_start();
 
     return 0;
 }
