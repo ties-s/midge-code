@@ -1,8 +1,8 @@
 /*
 * ________________________________________________________________________________________________________
-* Copyright © 2014 InvenSense Inc.  All rights reserved.
+* Copyright ï¿½ 2014 InvenSense Inc.  All rights reserved.
 *
-* This software and/or documentation  (collectively “Software”) is subject to InvenSense intellectual property rights 
+* This software and/or documentation  (collectively ï¿½Softwareï¿½) is subject to InvenSense intellectual property rights 
 * under U.S. and international copyright and other intellectual property rights laws.
 *
 * The Software contained herein is PROPRIETARY and CONFIDENTIAL to InvenSense and is provided 

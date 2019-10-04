@@ -6,7 +6,7 @@
 #include "sdk_errors.h"
 
 #define PDM_BUF_NUM 	2
-#define PDM_BUF_SIZE 	4096
+#define PDM_BUF_SIZE 	2400 //3
 
 typedef struct {
 	int16_t  mic_buf[PDM_BUF_SIZE];

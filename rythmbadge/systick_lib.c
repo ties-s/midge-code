@@ -25,7 +25,7 @@ static volatile bool time_sync_done;
 // +/- 20ppm oscillator --> +/- 0.655 Hz deviation. But we are conservative --> up to 50Hz deviation possible
 // default millis per ticks: 0.03051757812
 
-#define CLOCK_FREQ_DEVIATION_HZ			5.0f
+#define CLOCK_FREQ_DEVIATION_HZ			4.0f
 #define	MIN_MILLIS_PER_TICKS			(1000.0f / ((0 + 1.0f) * (APP_TIMER_CLOCK_FREQ + CLOCK_FREQ_DEVIATION_HZ)))
 #define	MAX_MILLIS_PER_TICKS			(1000.0f / ((0 + 1.0f) * (APP_TIMER_CLOCK_FREQ - CLOCK_FREQ_DEVIATION_HZ)))
 

@@ -2,6 +2,8 @@
 #include "nrf_drv_ppi.h"
 #include "nrf_log.h"
 #include "ble_gap.h"
+#include "advertiser_lib.h"
+#include "app_timer.h"
 
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS   600                                     /**< Reference voltage (in milli volts) used by ADC while doing conversion. */
 #define ADC_PRE_SCALING_COMPENSATION    6                                       /**< The ADC is configured to use VDD with 1/3 prescaling as input. And hence the result of conversion is to be multiplied by 3 to get the actual value of the battery voltage.*/
@@ -32,6 +34,16 @@ static const uint8_t BATT_MEAS_VOLTAGE_TO_SOC[] =
 static nrf_saadc_value_t 	adc_buf[2];
 uint8_t						batt_lvl_in_percentage;
 
+#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(60000)     		            /**< Battery level measurement interval (ticks). */
+APP_TIMER_DEF(m_battery_timer_id);                                  				/**< Battery timer. */
+
+static void battery_level_meas_timeout_handler(void * p_context)
+{
+	uint32_t          	err_code;
+	err_code = nrf_drv_saadc_sample();
+	APP_ERROR_CHECK(err_code);
+}
+
 void saadc_event_handler(nrf_drv_saadc_evt_t const * p_event)
 {
 	if (p_event->type == NRF_DRV_SAADC_EVT_DONE)
@@ -56,7 +68,7 @@ void saadc_event_handler(nrf_drv_saadc_evt_t const * p_event)
 	    	voltage_vector_element = (BATT_MEAS_VOLTAGE_TO_SOC_ELEMENTS- 1);
 
 	    batt_lvl_in_percentage = BATT_MEAS_VOLTAGE_TO_SOC[voltage_vector_element];
-
+	    advertiser_set_battery_percentage(batt_lvl_in_percentage);
 
 		NRF_LOG_INFO("Battery voltage: %d, percentage: %d%%", batt_lvl_in_milli_volts, batt_lvl_in_percentage);
 
@@ -86,4 +98,9 @@ void saadc_init(void)
 	// request first sample before timer fires.
 	err_code = nrf_drv_saadc_sample();
 	APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_create(&m_battery_timer_id, APP_TIMER_MODE_REPEATED, battery_level_meas_timeout_handler);
+
+    err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
 }

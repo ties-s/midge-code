@@ -89,6 +89,8 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spi.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pdm.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_timer.c \
   $(SDK_ROOT)/components/libraries/util/app_error.c \
   $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
   $(PROJ_DIR)main.c \
@@ -117,6 +119,7 @@ SRC_FILES += \
   $(PROJ_DIR)rythmbadge/request_handler_lib_02v1.c \
   $(PROJ_DIR)rythmbadge/sender_lib.c \
   $(PROJ_DIR)rythmbadge/sampling_lib.c \
+  $(PROJ_DIR)audio_switch/audio_switch.c \
   #$(PROJ_DIR)ble/ble_main.c \
   
 # Include folders common to all targets
@@ -187,6 +190,7 @@ INC_FOLDERS += \
   ICM20948/Driver \
   ICM20948/Driver/ICM20948 \
   rythmbadge \
+  audio_switch \
   #ble \
   
 # Libraries common to all targets
@@ -251,10 +255,10 @@ LDFLAGS += -Wl,--gc-sections
 # use newlib in nano version
 LDFLAGS += --specs=nano.specs
 
-nrf52832_xxaa: CFLAGS += -D__HEAP_SIZE=8192
-nrf52832_xxaa: CFLAGS += -D__STACK_SIZE=8192
-nrf52832_xxaa: ASMFLAGS += -D__HEAP_SIZE=8192
-nrf52832_xxaa: ASMFLAGS += -D__STACK_SIZE=8192
+nrf52832_xxaa: CFLAGS += -D__HEAP_SIZE=1024
+nrf52832_xxaa: CFLAGS += -D__STACK_SIZE=4096
+nrf52832_xxaa: ASMFLAGS += -D__HEAP_SIZE=1024
+nrf52832_xxaa: ASMFLAGS += -D__STACK_SIZE=4096
 
 # Add standard libraries at the very end of the linker input, after all objects
 # that may need symbols provided by these libraries.

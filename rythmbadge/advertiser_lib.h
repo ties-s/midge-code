@@ -37,7 +37,7 @@ void advertiser_stop_advertising(void);
  *
  * @param[in]	voltage				The battery voltage to set.
  */
-void advertiser_set_battery_voltage(float voltage);
+void advertiser_set_battery_percentage(uint8_t battery_percentage);
 
 /**@brief Function to set the badge assignement (ID + group) of the advertising-packet.
  *

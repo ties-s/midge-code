@@ -57,11 +57,14 @@ int main(void)
 
 	NRF_LOG_INFO("MAIN: Start...\n\r");
 
-	nrf_pwr_mgmt_init();
+//	nrf_pwr_mgmt_init();
 
 //	SOFTDEVICE_HANDLER_INIT(&clock_lf_cfg, NULL);
-	APP_SCHED_INIT(4, 100);
+	APP_SCHED_INIT(9, 50); //TODO: does it fit?
 //	APP_TIMER_INIT(0, 60, NULL); // doing it in systick_init
+//	NRF_LOG_INFO("size: %d", sizeof(data_source_info_t));
+//	NRF_LOG_INFO("size: %d", sizeof(pdm_buf_t));
+
 
 	ret = systick_init(0);
 	check_init_error(ret, 1);
@@ -99,7 +102,7 @@ int main(void)
 		app_sched_execute();
 		if (NRF_LOG_PROCESS() == false) // no more log entries to process
 		{
-			nrf_pwr_mgmt_run();
+//			nrf_pwr_mgmt_run();
 		}
 	}
 }

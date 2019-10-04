@@ -9,7 +9,7 @@
 /**< Structure for organizing custom badge advertising data */
 typedef struct
 {
-    uint8_t battery;   // scaled so that voltage = 1 + 0.01 * battery
+    uint8_t battery;
     uint8_t status_flags;
     uint16_t ID;
     uint8_t group;
@@ -54,11 +54,9 @@ void advertiser_stop_advertising(void) {
 }
 
 
-void advertiser_set_battery_voltage(float voltage) {
-	int32_t scaled_battery_voltage = ((int32_t)(100.0*voltage)) - 100;
-	scaled_battery_voltage = (scaled_battery_voltage < 0) ? 0 : scaled_battery_voltage;
-	scaled_battery_voltage = (scaled_battery_voltage > 255) ? 255 : scaled_battery_voltage;
-	custom_advdata.battery = (uint8_t) scaled_battery_voltage;
+void advertiser_set_battery_percentage(uint8_t battery_percentage)
+{
+	custom_advdata.battery = battery_percentage;
 	
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }

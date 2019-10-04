@@ -24,11 +24,16 @@ typedef enum{
 	MAX_IMU_SOURCES
 } imu_source_t;
 
-typedef struct{
+typedef struct {
+	imu_source_t imu_source;
+	const void * imu_buffer;
+} imu_source_info_t;
+
+typedef struct __attribute__((__packed__)) {
 	data_source_t data_source;
 	union{
 		uint8_t audio_buffer_num;
-		imu_source_t imu_source;
+		imu_source_info_t imu_source_info;
 	};
 } data_source_info_t;
 

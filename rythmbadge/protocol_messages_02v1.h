@@ -17,7 +17,7 @@
 #define Response_status_response_tag 1
 #define Response_start_microphone_response_tag 2
 #define Response_start_scan_response_tag 3
-#define Response_start_accelerometer_response_tag 4
+#define Response_start_imu_response_tag 4
 
 typedef struct {
 	Timestamp timestamp;
@@ -32,7 +32,7 @@ typedef struct {
 typedef struct {
 } StopMicrophoneRequest;
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
 	Timestamp timestamp;
 	uint16_t timeout;
 	uint16_t window;
@@ -45,7 +45,7 @@ typedef struct {
 typedef struct {
 } StopScanRequest;
 
-typedef struct {
+typedef struct __attribute__((__packed__)) {
 	Timestamp timestamp;
 	uint16_t acc_fsr;
 	uint16_t gyr_fsr;
@@ -62,7 +62,7 @@ typedef struct {
 typedef struct {
 } RestartRequest;
 
-typedef struct __attribute__((__packed__)){
+typedef struct __attribute__((__packed__)) {
 	uint8_t which_type;
 	union {
 		StatusRequest status_request;
@@ -70,8 +70,8 @@ typedef struct __attribute__((__packed__)){
 		StopMicrophoneRequest stop_microphone_request;
 		StartScanRequest start_scan_request;
 		StopScanRequest stop_scan_request;
-		StartImuRequest start_accelerometer_request;
-		StopImuRequest stop_accelerometer_request;
+		StartImuRequest start_imu_request;
+		StopImuRequest stop_imu_request;
 		IdentifyRequest identify_request;
 		RestartRequest restart_request;
 	} type;

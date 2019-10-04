@@ -571,6 +571,8 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 			/* Mirror FIFO contents and stop processing FIFO if an error was detected*/
 			if(inv_icm20948_updateTs(s, &data_left_in_fifo, &total_sample_cnt, &lastIrqTimeUs))
 				break;
+//			NRF_LOG_INFO("%d", total_sample_cnt);
+//			NRF_LOG_HEXDUMP_INFO(&total_sample_cnt, 2);
 			while(total_sample_cnt--) {
 				/* Read FIFO contents and parse it, and stop processing FIFO if an error was detected*/
 				if (inv_icm20948_fifo_pop(s, &header, &header2, &data_left_in_fifo))

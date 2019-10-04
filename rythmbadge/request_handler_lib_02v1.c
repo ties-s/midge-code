@@ -76,7 +76,7 @@ static void restart_request_handler(void * p_event_data, uint16_t event_size);
 static void status_response_handler(void * p_event_data, uint16_t event_size);
 static void start_microphone_response_handler(void * p_event_data, uint16_t event_size);
 static void start_scan_response_handler(void * p_event_data, uint16_t event_size);
-static void start_accelerometer_response_handler(void * p_event_data, uint16_t event_size);
+static void start_imu_response_handler(void * p_event_data, uint16_t event_size);
 
 
 static request_handler_for_type_t request_handlers[] = {
@@ -461,11 +461,11 @@ static void start_scan_response_handler(void * p_event_data, uint16_t event_size
 	send_response(NULL, 0);	
 }
 
-static void start_accelerometer_response_handler(void * p_event_data, uint16_t event_size) {
-	if(start_response(start_accelerometer_response_handler) != NRF_SUCCESS)
+static void start_imu_response_handler(void * p_event_data, uint16_t event_size) {
+	if(start_response(start_imu_response_handler) != NRF_SUCCESS)
 		return;
 	
-	response_event.response.which_type = Response_start_accelerometer_response_tag;
+	response_event.response.which_type = Response_start_imu_response_tag;
 	response_event.response_retries = 0;
 	response_event.response.type.start_imu_response.timestamp = response_timestamp;
 	
@@ -583,21 +583,21 @@ static void stop_scan_request_handler(void * p_event_data, uint16_t event_size) 
 static void start_imu_request_handler(void * p_event_data, uint16_t event_size)
 {
 	// Set the timestamp:
-	Timestamp timestamp = (request_event.request).type.start_accelerometer_request.timestamp;
+	Timestamp timestamp = (request_event.request).type.start_imu_request.timestamp;
 	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
 	advertiser_set_status_flag_is_clock_synced(1);
 	
-	uint16_t acc_fsr  	= (request_event.request).type.start_accelerometer_request.acc_fsr;
-	uint16_t gyr_fsr	= (request_event.request).type.start_accelerometer_request.gyr_fsr;
-	uint16_t datarate 	= (request_event.request).type.start_accelerometer_request.datarate;
+	uint16_t acc_fsr  	= (request_event.request).type.start_imu_request.acc_fsr;
+	uint16_t gyr_fsr	= (request_event.request).type.start_imu_request.gyr_fsr;
+	uint16_t datarate 	= (request_event.request).type.start_imu_request.datarate;
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Start accelerometer with acc_fsr: %d, gyr_fsr: %d, datarate: %d", acc_fsr, gyr_fsr, datarate);
+	NRF_LOG_INFO("REQUEST_HANDLER: Start imu with acc_fsr: %d, gyr_fsr: %d, datarate: %d", acc_fsr, gyr_fsr, datarate);
 	
 	ret_code_t ret = sampling_start_imu(acc_fsr, gyr_fsr, datarate);
-	NRF_LOG_INFO("REQUEST_HANDLER: Ret sampling_start_accelerometer: %d", ret);
+	NRF_LOG_INFO("REQUEST_HANDLER: Ret sampling_start_imu: %d", ret);
 
 	if(ret == NRF_SUCCESS) {
-		app_sched_event_put(NULL, 0, start_accelerometer_response_handler);
+		app_sched_event_put(NULL, 0, start_imu_response_handler);
 		// Don't finish it here, but in the response-handler (because of the response_timestamp and response_clock_status)
 		//finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
 	} else {
@@ -609,7 +609,7 @@ static void start_imu_request_handler(void * p_event_data, uint16_t event_size)
 static void stop_imu_request_handler(void * p_event_data, uint16_t event_size)
 {
 	sampling_stop_imu();
-	NRF_LOG_INFO("REQUEST_HANDLER: Stop accelerometer\n");
+	NRF_LOG_INFO("REQUEST_HANDLER: Stop imu\n");
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
 }
 

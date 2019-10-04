@@ -27,7 +27,8 @@ FATFS fs;
 DIR dir;
 FILINFO fno;
 FIL audio_file_handle;
-FIL accel_file_handle;
+FIL imu_file_handle[MAX_IMU_SOURCES];
+
 
 void sd_write(void * p_event_data, uint16_t event_size)
 {
@@ -44,46 +45,57 @@ void sd_write(void * p_event_data, uint16_t event_size)
 		}
 		f_sync(&audio_file_handle);
 	}
-	else if (data_source_info.data_source == IMU && !accel_file_handle.err)
+	else if (data_source_info.data_source == IMU && !imu_file_handle[data_source_info.imu_source_info.imu_source].err)
 	{
-		FRESULT ff_result = f_printf(&accel_file_handle, "%ld %f %f %f", accel_sample.timestamp, accel_sample.accel[0], accel_sample.accel[1], accel_sample.accel[2]);
+		FRESULT ff_result = f_write(&imu_file_handle[data_source_info.imu_source_info.imu_source], data_source_info.imu_source_info.imu_buffer, sizeof(imu_sample_t)*IMU_BUFFER_SIZE, (UINT *) &bytes_written);
 		if (ff_result != FR_OK)
 		{
-			NRF_LOG_INFO("Accel data write to sd failed.");
+			NRF_LOG_INFO("IMU data write to sd failed: %d", ff_result);
+			// TODO: if many errors handle them
 		}
-		f_sync(&accel_file_handle);
+		f_sync(&imu_file_handle[data_source_info.imu_source_info.imu_source]);
 	}
 }
 
 uint32_t storage_close_file(data_source_t source)
 {
-	FIL file;
 	FRESULT ff_result;
 
 	if (source == AUDIO)
 	{
-		file = audio_file_handle;
 		audio_file_handle.err = 1;
+		ff_result = f_sync(&audio_file_handle);
+		if (ff_result)
+		{
+			NRF_LOG_INFO("sync file error during closing");
+			return -1;
+		}
+		ff_result = f_close(&audio_file_handle);
+		if (ff_result)
+		{
+			NRF_LOG_INFO("close file error");
+			return -1;
+		}
 	}
 	else if (source == IMU)
 	{
-		file = accel_file_handle;
-		accel_file_handle.err = 1;
+		for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
+		{
+			ff_result = f_sync(&imu_file_handle[sensor]);
+			if (ff_result)
+			{
+				NRF_LOG_INFO("sync file error during closing");
+				return -1;
+			}
+			ff_result = f_close(&imu_file_handle[sensor]);
+			if (ff_result)
+			{
+				NRF_LOG_INFO("close file error");
+				return -1;
+			}
+			imu_file_handle[sensor].err = 1;
+		}
 	}
-
-	ff_result = f_sync(&file);
-	if (ff_result)
-	{
-		NRF_LOG_INFO("sync file error during closing");
-		return -1;
-	}
-	ff_result = f_close(&file);
-	if (ff_result)
-	{
-		NRF_LOG_INFO("close file error");
-		return -1;
-	}
-
 	return 0;
 }
 
@@ -153,6 +165,8 @@ uint32_t storage_init(void)
     uint32_t blocks_per_mb = (1024uL * 1024uL) / m_block_dev_sdc.block_dev.p_ops->geometry(&m_block_dev_sdc.block_dev)->blk_size;
     uint32_t capacity = m_block_dev_sdc.block_dev.p_ops->geometry(&m_block_dev_sdc.block_dev)->blk_count / blocks_per_mb;
     NRF_LOG_INFO("Capacity: %d MB", capacity);
+//    ff_result = f_getfree("", , &fs);
+
 
     NRF_LOG_INFO("Mounting volume...");
     ff_result = f_mount(&fs, "", 1);
@@ -162,7 +176,7 @@ uint32_t storage_init(void)
         return 2;
     }
 
-    list_directory();
+//    list_directory();
     return 0;
 }
 
@@ -194,14 +208,12 @@ uint32_t storage_open_file(data_source_t source)
 {
 	FRESULT ff_result;
 
-	uint32_t seconds;
-	uint16_t milliseconds;
-	systick_get_timestamp(&seconds, &milliseconds);
-	TCHAR filename[20] = {};
+	uint32_t seconds = systick_get_millis()/1000;
+	TCHAR filename[50] = {};
 
 	if (source == AUDIO)
 	{
-		sprintf(filename, "%ld_%d_audio", seconds, milliseconds);
+		sprintf(filename, "%ld_audio", seconds);
 	    ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
 	    if (ff_result != FR_OK)
 	    {
@@ -212,14 +224,17 @@ uint32_t storage_open_file(data_source_t source)
 	}
 	if (source == IMU)
 	{
-		sprintf(filename, "%ld_%d_accel", seconds, milliseconds);
-		ff_result = f_open(&accel_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
-		if (ff_result != FR_OK)
+		for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
 		{
-			NRF_LOG_INFO("Unable to open or create file: %s", filename);
-			return -1;
+			sprintf(filename, "%ld_%s", seconds, imu_sensor_name[sensor]);
+			ff_result = f_open(&imu_file_handle[sensor], filename, FA_WRITE | FA_CREATE_ALWAYS);
+			if (ff_result != FR_OK)
+			{
+				NRF_LOG_INFO("Unable to open or create file: %s", filename);
+				return -1;
+			}
+			imu_file_handle[sensor].err = 0;
 		}
-		accel_file_handle.err = 0;
 	}
 
     return 0;

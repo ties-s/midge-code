@@ -11,6 +11,8 @@
 #include "drv_audio_pdm.h"
 #include "nrf_drv_pdm.h"
 #include "storage.h"
+#include "saadc.h"
+#include "audio_switch.h"
 
 //#define ABS(x) (((x) >= 0)? (x) : -(x))
 
@@ -48,7 +50,7 @@ ret_code_t sampling_init(void)
 	sampling_configuration = (sampling_configuration_t) 0;
 	
 	/********************* IMU ***************************/
-	ret = icm20948_init();
+	ret = icm20948_init(); // Has to be run before audio switch because of gpiote_init
 	if(ret != NRF_SUCCESS) return ret;	
 	
 	/********************* MICROPHONE ***********************************/
@@ -64,6 +66,13 @@ ret_code_t sampling_init(void)
 //	// create a timer for scans
 //	ret = app_timer_create(&sampling_scan_timer, APP_TIMER_MODE_REPEATED, sampling_scan_callback);
 //	if(ret != NRF_SUCCESS) return ret;
+
+	/** Battery **/
+	saadc_init();
+
+	/** Audio switch **/
+	ret = audio_switch_init();
+	if(ret != NRF_SUCCESS) return ret;
 
 	return NRF_SUCCESS;
 }
@@ -81,10 +90,10 @@ ret_code_t sampling_start_imu(uint16_t acc_fsr, uint16_t gyr_fsr, uint16_t datar
 	
 	// accel 2,4,6,8,16 g
 	// gyro 250, 500, 1000, 2000 dps
-	ret = icm20948_set_fsr(acc_fsr, gyr_fsr);
+	ret = icm20948_set_fsr((uint32_t)acc_fsr, (uint32_t)gyr_fsr);
 	if(ret != NRF_SUCCESS) return ret;
 
-	// TODO: datarates accepted?
+	// TODO: datarates accepted? = do a check and set acceptable ones only - or in python, less work for me
 	ret = icm20948_set_datarate(datarate);
 	if(ret != NRF_SUCCESS) return ret;	
 
