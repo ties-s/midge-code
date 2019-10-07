@@ -20,27 +20,18 @@ typedef struct
 static custom_advdata_t custom_advdata;	/**< The custom advertising data structure where the current configuration is stored. */
 
 
-void advertiser_init(void) {	
+void advertiser_init(void)
+{
 	memset(&custom_advdata, 0, sizeof(custom_advdata));
-	// We need to swap the MAC address to be compatible with old code.. TODO: check this claim or change it in both
+	// We need to swap the MAC address to be compatible with old code..
 	uint8_t MAC[6];
 	ble_get_MAC_address(MAC);
 	for(uint8_t i = 0; i < 6; i++) {
 		custom_advdata.MAC[i] = MAC[5-i];
 	}
 	
-	// Try to read the badge-assignement from the filesystem/storer:
-	BadgeAssignement badge_assignement;
-//	ret_code_t ret = storer_read_badge_assignement(&badge_assignement);
-//	if(ret != NRF_SUCCESS) {
-	badge_assignement.ID = ADVERTISING_RESET_ID;
-	badge_assignement.group = ADVERTISING_RESET_GROUP;
-//		NRF_LOG_INFO("ADVERTISER: Could not find badge assignement in storage -> Take default: (%u, %u)\n", badge_assignement.ID, badge_assignement.group);
-//	} else {
-//		NRF_LOG_INFO("ADVERTISER: Read out badge assignement from storage: (%u, %u)\n", badge_assignement.ID, badge_assignement.group);
-//	}
-	custom_advdata.group = badge_assignement.group;
-	custom_advdata.ID = badge_assignement.ID;
+	custom_advdata.group = ADVERTISING_RESET_GROUP;
+	custom_advdata.ID = ADVERTISING_RESET_ID;
 	
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }
@@ -48,11 +39,6 @@ void advertiser_init(void) {
 ret_code_t advertiser_start_advertising(void) {
 	return ble_start_advertising();
 }
-
-void advertiser_stop_advertising(void) {
-	ble_stop_advertising();
-}
-
 
 void advertiser_set_battery_percentage(uint8_t battery_percentage)
 {
@@ -64,45 +50,12 @@ void advertiser_set_battery_percentage(uint8_t battery_percentage)
 
 
 
-ret_code_t advertiser_set_badge_assignement(BadgeAssignement badge_assignement) {
-	
-//	uint8_t reset_badge_assignement = 0;
-//	if(badge_assignement.ID == ADVERTISING_RESET_ID && badge_assignement.group == ADVERTISING_RESET_GROUP) {
-//		NRF_LOG_INFO("ADVERTISER: Reset badge assignement -> Take default: (%u, %u)\n", badge_assignement.ID, badge_assignement.group);
-//		reset_badge_assignement = 1;
-//	}
-	
+ret_code_t advertiser_set_badge_assignement(BadgeAssignment badge_assignement)
+{
 	custom_advdata.ID = badge_assignement.ID;
 	custom_advdata.group = badge_assignement.group;	
 	
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
-	// TODO: store it in the new file I will create !fucking retard complicating everything
-	
-	// Check if we need to reset the badge assignement, or if we should store it.
-//	if(reset_badge_assignement) {
-//		NRF_LOG_INFO("ADVERTISER: Delete badge assignement from storage...\n");
-////		return storer_clear_badge_assignement();
-//	} else {	// We want to store the new badge assignement
-//		// First read if we have already the correct badge-assignement stored:
-//		BadgeAssignement stored_badge_assignement;
-//		ret_code_t ret=0;// = storer_read_badge_assignement(&stored_badge_assignement);
-//		if(ret == NRF_ERROR_INVALID_STATE || ret == NRF_ERROR_INVALID_DATA || (ret == NRF_SUCCESS && (stored_badge_assignement.ID != badge_assignement.ID || stored_badge_assignement.group != badge_assignement.group))) {
-//			// If we have not found any entry or the badge assignement mismatches --> store it.
-//			NRF_LOG_INFO("ADVERTISER: Badge assignement missmatch: --> setting the new badge assignement: Old (%u, %u), New (%u, %u)\n", stored_badge_assignement.ID, stored_badge_assignement.group, badge_assignement.ID, badge_assignement.group);
-////			return storer_store_badge_assignement(&badge_assignement);
-//			/*
-//			if(ret == NRF_ERROR_INTERNAL) {
-//				return NRF_ERROR_INTERNAL;
-//			} else if (ret != NRF_SUCCESS) {	// There is an error in the configuration of the badge-assignement partition
-//				return NRF_ERROR_NOT_SUPPORTED;
-//			}
-//			*/
-//		} else if(ret == NRF_ERROR_INTERNAL) {
-//			return NRF_ERROR_INTERNAL;
-//		} else {
-//			NRF_LOG_INFO("ADVERTISER: Badge assignement already up to date  (%u, %u)\n", badge_assignement.ID, badge_assignement.group);
-//		}
-//	}
 	
 	return NRF_SUCCESS;
 }
@@ -144,12 +97,12 @@ void advertiser_set_status_flag_imu_enabled(uint8_t imu_enabled) {
 
 
 
-void advertiser_get_badge_assignement(BadgeAssignement* badge_assignement) {
+void advertiser_get_badge_assignement(BadgeAssignment* badge_assignement) {
 	badge_assignement->ID = custom_advdata.ID;
 	badge_assignement->group = custom_advdata.group;
 }
 
-void advertiser_get_badge_assignement_from_advdata(BadgeAssignement* badge_assignement, void* custom_advdata) {
+void advertiser_get_badge_assignement_from_advdata(BadgeAssignment* badge_assignement, void* custom_advdata) {
 	custom_advdata_t tmp;
 	memset(&tmp, 0, sizeof(tmp));
 	memcpy(&tmp, custom_advdata, CUSTOM_ADVDATA_LEN);

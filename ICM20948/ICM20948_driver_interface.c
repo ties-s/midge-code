@@ -20,7 +20,8 @@ inv_icm20948_t icm_device;
 
 imu_sample_t imu_buffer[MAX_IMU_SOURCES][2][IMU_BUFFER_SIZE];
 
-const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "accel_raw", "gyr", "gyr_raw", "mag", "mag_raw", "rotation", "game_rotation", "geom_rotation"};
+//const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "accel_raw", "gyr", "gyr_raw", "mag", "mag_raw", "rotation", "game_rotation", "geom_rotation"};
+const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "gyr", "mag", "rotation"};
 
 static const float cfg_mounting_matrix[9]= {
 	1.f, 0, 0,
@@ -62,17 +63,17 @@ ret_code_t icm20948_enable_sensors(void)
 {
 	ret_code_t err = NRF_SUCCESS;
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ACCELEROMETER, 1);
-	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_ACCELEROMETER, 1);
+//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_ACCELEROMETER, 1);
 
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GYROSCOPE, 1);
-	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_GYROSCOPE, 1);
+//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_GYROSCOPE, 1);
 
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD, 1);
-	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED, 1);
+//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED, 1);
 
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ROTATION_VECTOR, 1);
-	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR, 1);
-	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR, 1);
+//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR, 1);
+//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR, 1);
 
 	nrfx_gpiote_in_event_enable(INT1_PIN, true);
 
@@ -265,9 +266,16 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 
 void icm20948_service_isr(void * p_event_data, uint16_t event_size)
 {
-//	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
+	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
 //	nrfx_gpiote_in_event_enable(INT1_PIN, true);
-	NRF_LOG_INFO("isr");
+//	NRF_LOG_INFO("isr");
+
+//	uint8_t buf[3];
+//	twim_read_register(NULL, 0x70, buf, 2); // fifo count
+//	twim_read_register(NULL, 0x1B, &buf[2], 1); // fifo overflow
+//	NRF_LOG_INFO("fifo size: %d, %d", (uint16_t)(buf[0]<<8|buf[1]), buf[2]);
+
+//	app_sched_event_put(NULL, 0, setup_fifo_burst);
 }
 
 
@@ -298,7 +306,7 @@ static uint32_t icm20948_sensor_setup()
 	inv_icm20948_soft_reset(&icm_device);
 	inv_icm20948_sleep_us(500000);
 
-	//	/* Setup accel and gyro mounting matrix and associated angle for TODO:current?? board */
+	//	/* Setup accel and gyro mounting matrix and associated angle for TODO:current?? board = wait for feedback*/
 	inv_icm20948_init_matrix(&icm_device);
 
 	icm20948_apply_mounting_matrix();
@@ -430,39 +438,29 @@ ret_code_t icm20948_init(void)
 	icm20948_serif.context   = 0; /* no need */
 	icm20948_serif.read_reg  = twim_read_register;
 	icm20948_serif.write_reg = twim_write_register;
-	icm20948_serif.max_read  = 250; /* maximum number of bytes allowed per serial read */
-	icm20948_serif.max_write = 250; /* maximum number of bytes allowed per serial write */
+	icm20948_serif.max_read  = 254; /* maximum number of bytes allowed per serial read */
+	icm20948_serif.max_write = 254; /* maximum number of bytes allowed per serial write */
 	icm20948_serif.is_spi	 = false;
 
 	inv_icm20948_reset_states(&icm_device, &icm20948_serif);
 
-	 err = icm20948_sensor_setup();
-	 if (err) return err;
+	err = icm20948_sensor_setup();
+	if (err) return err;
 
-//	if(icm20948_run_selftest())
-//	{
-//		NRF_LOG_ERROR("self test failed");
-//		// TODO: invoke error handler
-//	}
-//	inv_icm20948_set_offset(&icm_device, unscaled_bias);
+	err = icm20948_run_selftest();
+	if (err) return err;
+	inv_icm20948_set_offset(&icm_device, unscaled_bias);
 
 	 return NRF_SUCCESS;
 }
 
 uint64_t inv_icm20948_get_time_us(void)
 {
-	// TODO: change this after implementing global timestamp from the rest of the project???
-//	uint32_t cnt = app_timer_cnt_get();
-//	NRF_LOG_INFO("cnt: %ld", cnt); TODO: make sure there are no overflows for at least 8 hours? in relation to the global timestamp above
 	return systick_get_millis();
 }
 
-//
-//void inv_icm20948_sleep(int ms) {
-//	delay_ms(ms);
-//}
-
-void inv_icm20948_sleep_us(int us){
+void inv_icm20948_sleep_us(int us)
+{
 	nrfx_coredep_delay_us(us);
 }
 

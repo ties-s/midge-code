@@ -3,12 +3,12 @@
 
 #include "stdint.h"
 #include "sdk_errors.h"
-#include "common_messages.h"	// For BadgeAssignment
+#include "protocol_messages.h"	// For BadgeAssignment
 
 
 #define ADVERTISING_DEVICE_NAME			"HDBDG"     /**< Name of device. Will be included in the advertising data. */ 
 #define ADVERTISING_INTERVAL_MS		  	200   		/**< The advertising interval. */
-#define ADVERTISING_TIMEOUT_SECONDS    	6*100       /**< The advertising timeout interval. */ //that's in 10ms units so 60ms
+#define ADVERTISING_TIMEOUT_SECONDS    	0       /**< The advertising timeout interval. */ //that's in 10ms units so 60ms
 
 #define ADVERTISING_RESET_ID			0xFFFF
 #define ADVERTISING_RESET_GROUP			0xFF
@@ -29,9 +29,6 @@ void advertiser_init(void);
  */
 ret_code_t advertiser_start_advertising(void);
 
-/**@brief Function to stop the advertising process.
- */
-void advertiser_stop_advertising(void);
 
 /**@brief Function to set the badge assignement (ID + group) of the advertising-packet.
  *
@@ -51,7 +48,7 @@ void advertiser_set_battery_percentage(uint8_t battery_percentage);
  * @retval		NRF_ERROR_INTERNAL	If an internal error occured (e.g. busy) --> retry it.
  * @retval		Another error code	Probably of a false configuration of the filesystem partition for the badge assignement.
  */
-ret_code_t advertiser_set_badge_assignement(BadgeAssignement badge_assignement);
+ret_code_t advertiser_set_badge_assignement(BadgeAssignment badge_assignement);
 
 
 /**@brief Function to set the is_clock_synced-status flag of the advertising-packet.
@@ -85,7 +82,7 @@ void advertiser_set_status_flag_imu_enabled(uint8_t imu_enabled);
  *
  * @param[out]	badge_assignement	Pointer where to store the badge_assignement.
  */
-void advertiser_get_badge_assignement(BadgeAssignement* badge_assignement);
+void advertiser_get_badge_assignement(BadgeAssignment* badge_assignement);
 
 
 /**@brief Function to retrieve the badge assignement from a custom_advdata-packet.
@@ -93,7 +90,7 @@ void advertiser_get_badge_assignement(BadgeAssignement* badge_assignement);
  * @param[out]	badge_assignement	Pointer where to store the badge_assignement.
  * @param[in]	custom_advdata		Pointer to custom_advdata.
  */
-void advertiser_get_badge_assignement_from_advdata(BadgeAssignement* badge_assignement, void* custom_advdata);
+void advertiser_get_badge_assignement_from_advdata(BadgeAssignment* badge_assignement, void* custom_advdata);
 
 
 /**@brief Function to retrieve the length of the manufacture-data.

@@ -1,4 +1,5 @@
 #include <drv_audio_pdm.h>
+#include <request_handler_lib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -18,53 +19,26 @@
 #include "ble_lib.h"
 #include "storage.h"
 #include "advertiser_lib.h"
-#include "request_handler_lib_02v1.h"
 #include "sampling_lib.h"
 
+#include "led/led.h"
 
-/**@brief Function that enters a while-true loop if initialization failed.
- *
- * @param[in]	ret				Error code from an initialization function.
- * @param[in]	identifier		Identifier, represents the number of red LED blinks.
- *
- */
-void check_init_error(ret_code_t ret, uint8_t identifier) {
-	if(ret == NRF_SUCCESS)
-		return;
-	while(1) {
-		for(uint8_t i = 0; i < identifier; i++) {
-			nrf_gpio_pin_write(LED, LED_ON);  //turn on LED
-			nrf_delay_ms(200);
-			nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
-			nrf_delay_ms(200);
-		}
-		nrf_delay_ms(2000);
-	}
+void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
+{
+    NVIC_SystemReset();
 }
 
-/**
- * ============================================== MAIN ====================================================
- */
+
 int main(void)
 {
 	ret_code_t ret;
 
     NRF_LOG_INIT(NULL);
     NRF_LOG_DEFAULT_BACKENDS_INIT();
-
-	nrf_gpio_cfg_output(LED);
-	nrf_gpio_pin_write(LED, LED_OFF);
-
 	NRF_LOG_INFO("MAIN: Start...\n\r");
+	led_init();
 
-//	nrf_pwr_mgmt_init();
-
-//	SOFTDEVICE_HANDLER_INIT(&clock_lf_cfg, NULL);
-	APP_SCHED_INIT(9, 50); //TODO: does it fit?
-//	APP_TIMER_INIT(0, 60, NULL); // doing it in systick_init
-//	NRF_LOG_INFO("size: %d", sizeof(data_source_info_t));
-//	NRF_LOG_INFO("size: %d", sizeof(pdm_buf_t));
-
+	APP_SCHED_INIT(sizeof(data_source_info_t), 90);
 
 	ret = systick_init(0);
 	check_init_error(ret, 1);
@@ -89,20 +63,13 @@ int main(void)
 	ret = request_handler_init();
 	check_init_error(ret, 7);
 
-
-	// If initialization was successful, blink the green LED 3 times.
-	for(uint8_t i = 0; i < 3; i++) {
-		nrf_gpio_pin_write(LED, LED_ON);  //turn on LED
-		nrf_delay_ms(100);
-		nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
-		nrf_delay_ms(100);
-	}
+	led_init_success();
 
 	while(1) {
 		app_sched_execute();
 		if (NRF_LOG_PROCESS() == false) // no more log entries to process
 		{
-//			nrf_pwr_mgmt_run();
+
 		}
 	}
 }

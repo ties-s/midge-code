@@ -54,6 +54,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/ble/peer_manager/auth_status_tracker.c \
   $(SDK_ROOT)/components/ble/common/ble_advdata.c \
   $(SDK_ROOT)/components/ble/ble_advertising/ble_advertising.c \
+  $(SDK_ROOT)/components/ble/nrf_ble_scan/nrf_ble_scan.c \
   $(SDK_ROOT)/components/ble/common/ble_conn_params.c \
   $(SDK_ROOT)/components/ble/common/ble_conn_state.c \
   $(SDK_ROOT)/components/ble/common/ble_srv_common.c \
@@ -73,8 +74,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu.c \
   $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu_bonded.c \
   $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu_unbonded.c \
-  $(SDK_ROOT)/components/ble/ble_services/ble_bas/ble_bas.c \
-  $(SDK_ROOT)/components/ble/ble_services/ble_nus/ble_nus.c \
+    $(SDK_ROOT)/components/ble/ble_services/ble_nus/ble_nus.c \
   $(SDK_ROOT)/components/ble/ble_link_ctx_manager/ble_link_ctx_manager.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
@@ -113,14 +113,14 @@ SRC_FILES += \
   $(PROJ_DIR)ICM20948/Driver/ICM20948/Icm20948Transport.c \
   $(PROJ_DIR)rythmbadge/systick_lib.c \
   $(PROJ_DIR)rythmbadge/timeout_lib.c \
-  $(PROJ_DIR)rythmbadge/system_event_lib.c \
   $(PROJ_DIR)rythmbadge/ble_lib.c \
   $(PROJ_DIR)rythmbadge/advertiser_lib.c \
-  $(PROJ_DIR)rythmbadge/request_handler_lib_02v1.c \
+  $(PROJ_DIR)rythmbadge/request_handler_lib.c \
   $(PROJ_DIR)rythmbadge/sender_lib.c \
   $(PROJ_DIR)rythmbadge/sampling_lib.c \
+  $(PROJ_DIR)rythmbadge/scanner_lib.c \
   $(PROJ_DIR)audio_switch/audio_switch.c \
-  #$(PROJ_DIR)ble/ble_main.c \
+  $(PROJ_DIR)led/led.c \
   
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -171,7 +171,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/ble/ble_services/ble_dfu \
   $(SDK_ROOT)/components/ble/ble_services/ble_nus \
   $(SDK_ROOT)/components/ble/ble_link_ctx_manager \
-  $(SDK_ROOT)/components/ble/ble_services/ble_bas \
+  $(SDK_ROOT)/components/ble/nrf_ble_scan \
   $(SDK_ROOT)/external/fprintf \
   $(SDK_ROOT)/components/libraries/svc \
   $(SDK_ROOT)/components/libraries/log/src \
@@ -191,7 +191,8 @@ INC_FOLDERS += \
   ICM20948/Driver/ICM20948 \
   rythmbadge \
   audio_switch \
-  #ble \
+  led \
+
   
 # Libraries common to all targets
 LIB_FILES += \
@@ -203,7 +204,7 @@ OPT = -O0 -g3 #-Os
 
 # C flags common to all targets
 CFLAGS += $(OPT)
-CFLAGS += -DDEBUG
+#CFLAGS += -DDEBUG #removed to allow the error handler to reset the MCU
 CFLAGS += -DBL_SETTINGS_ACCESS_ONLY
 CFLAGS += -DBOARD_SPCL
 CFLAGS += -DFLOAT_ABI_HARD

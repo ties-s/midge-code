@@ -51,7 +51,8 @@ APP_TIMER_DEF(transmit_queued_bytes_timer);				/**< The app-timer to periodicall
 
 /**@brief Function to reset the sender state.
  */
-static void sender_reset(void) {
+static void sender_reset(void)
+{
 	connected = 0;
 	transmitting = 0;
 	// Flush the tx and rx FIFO
@@ -62,7 +63,8 @@ static void sender_reset(void) {
 
 /**@brief Function that is called when a connection was established.
  */
-static void on_connect_callback(void) {
+static void on_connect_callback(void)
+{
 	sender_reset();
 	// Start the disconect-timeout:
 	#if DISCONNECT_TIMEOUT_ENABLED
@@ -79,16 +81,14 @@ static void on_connect_callback(void) {
 
 /**@brief Function that is called when disconnected event occurs.
  */
-static void on_disconnect_callback(void) {
+static void on_disconnect_callback(void)
+{
 	sender_reset();
 	// Stop the disconnect-timeout:
 	timeout_stop(disconnect_timeout_id);
 	connected = 0;
-	#ifdef NRF_LOG_INFO_ENABLE
-	#ifndef UNIT_TEST
-    nrf_gpio_pin_write(GREEN_LED, LED_OFF);  //turn on LED
-	#endif
-	#endif
+	ble_start_advertising();
+
 	NRF_LOG_INFO("SENDER: Disconnected callback\n");
 }
 
@@ -160,7 +160,7 @@ static ret_code_t transmit_queued_bytes(void) {
 	
 	ret_code_t ret = NRF_SUCCESS;
 	if(len > 0) {	
-		NRF_LOG_INFO("len to send: %d", len);
+//		NRF_LOG_INFO("len to send: %d", len);
 		// Read the bytes manually from the fifo to be efficient:
 		for(uint32_t i = 0; i < len; i++) 
 			transmit_buf[i] = tx_fifo.p_buf[(tx_fifo.read_pos + i) & tx_fifo.buf_size_mask];	// extracted from app_fifo.c: "static __INLINE void fifo_peek(app_fifo_t * p_fifo, uint16_t index, uint8_t * p_byte)"

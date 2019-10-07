@@ -2,7 +2,6 @@
 #define __PROTOCOL_MESSAGES_02V1_H
 
 #include <stdint.h>
-#include "common_messages.h"
 
 #define Request_status_request_tag 1
 #define Request_start_microphone_request_tag 2
@@ -13,16 +12,28 @@
 #define Request_stop_imu_request_tag 7
 #define Request_identify_request_tag 27
 #define Request_restart_request_tag 29
+#define Request_free_sdc_space_request_tag 30
 
 #define Response_status_response_tag 1
 #define Response_start_microphone_response_tag 2
 #define Response_start_scan_response_tag 3
 #define Response_start_imu_response_tag 4
+#define Response_free_sdc_space_response_tag 5
+
+typedef struct __attribute__((__packed__)) {
+	uint32_t seconds;
+	uint16_t ms;
+} Timestamp;
+
+typedef struct __attribute__((__packed__)) {
+	uint16_t ID;
+	uint8_t group;
+} BadgeAssignment;
 
 typedef struct {
 	Timestamp timestamp;
 	uint8_t has_badge_assignement;
-	BadgeAssignement badge_assignement;
+	BadgeAssignment badge_assignement;
 } StatusRequest;
 
 typedef struct {
@@ -34,12 +45,8 @@ typedef struct {
 
 typedef struct __attribute__((__packed__)) {
 	Timestamp timestamp;
-	uint16_t timeout;
 	uint16_t window;
 	uint16_t interval;
-	uint16_t duration;
-	uint16_t period;
-	uint8_t aggregation_type;
 } StartScanRequest;
 
 typedef struct {
@@ -62,6 +69,9 @@ typedef struct {
 typedef struct {
 } RestartRequest;
 
+typedef struct {
+} FreeSDCSpaceRequest;
+
 typedef struct __attribute__((__packed__)) {
 	uint8_t which_type;
 	union {
@@ -74,6 +84,7 @@ typedef struct __attribute__((__packed__)) {
 		StopImuRequest stop_imu_request;
 		IdentifyRequest identify_request;
 		RestartRequest restart_request;
+		FreeSDCSpaceRequest free_sdc_space_request;
 	} type;
 } Request;
 
@@ -98,12 +109,19 @@ typedef struct {
 } StartImuResponse;
 
 typedef struct {
+	uint32_t total_space;
+	uint32_t free_space;
+	Timestamp timestamp;
+} FreeSDCSpaceResponse;
+
+typedef struct __attribute__((__packed__)) {
 	uint8_t which_type;
 	union {
 		StatusResponse status_response;
 		StartMicrophoneResponse start_microphone_response;
 		StartScanResponse start_scan_response;
 		StartImuResponse start_imu_response;
+		FreeSDCSpaceResponse free_sdc_space_response;
 	} type;
 } Response;
 

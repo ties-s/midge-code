@@ -26,7 +26,6 @@ typedef void (*ble_on_receive_callback_t)		(const uint8_t * p_data, uint16_t len
 typedef void (*ble_on_transmit_callback_t)		(void);									/**< The on transmit callback function type. */
 typedef void (*ble_on_connect_callback_t)		(void);									/**< The on connect callback function type. */
 typedef void (*ble_on_disconnect_callback_t)	(void);									/**< The on disconnect callback function type. */
-typedef void (*ble_on_scan_timeout_callback_t)	(void);									/**< The on scan timeout callback function type. */
 typedef void (*ble_on_scan_report_callback_t)	(const ble_gap_evt_adv_report_t* scan_report);/**< The on scan report callback function type. */
 
 
@@ -82,10 +81,6 @@ ret_code_t 	ble_set_advertising_custom_advdata(uint16_t company_identifier, uint
 ret_code_t 	ble_start_advertising(void);
 
 
-/**@brief Function to stop the advertising process.
- */
-void 		ble_stop_advertising(void);
-
 
 /**@brief Function to start a scan-operation.
  * 
@@ -94,16 +89,9 @@ void 		ble_stop_advertising(void);
  * @param[in] scan_duration_seconds	The scan duration in seconds.
  *
  * @retval 	NRF_SUCCESS Successfully initiated scanning procedure.
- * @retval 	NRF_ERROR_INVALID_ADDR Invalid pointer supplied.
- * @retval 	NRF_ERROR_INVALID_STATE Invalid state to perform operation.
- * @retval 	NRF_ERROR_INVALID_PARAM Invalid parameter(s) supplied.
- * @retval 	NRF_ERROR_BUSY The stack is busy, process pending events and retry.
- * @retval 	NRF_ERROR_RESOURCES Not enough BLE role slots available.
- *                               Stop one or more currently active roles (Central, Peripheral or Broadcaster) and try again
- *
  * @note		The input-parameters of this function has to be chosen in a way that advertising is still possible.
  */
-ret_code_t 	ble_start_scanning(uint16_t scan_interval_ms, uint16_t scan_window_ms, uint16_t scan_duration_seconds);
+ret_code_t ble_start_scanning(uint16_t scan_interval_ms, uint16_t scan_window_ms);
 
 
 /**@brief	Function for stopping any ongoing scan-operation.
@@ -120,12 +108,6 @@ void 		ble_stop_scanning(void);
  */
 void 		ble_get_MAC_address(uint8_t* MAC_address);
 
-
-/**@brief	Function for retrieve the current BLE-state.
- *
- * @retval 	The current BLE-State.
- */
-ble_state_t ble_get_state(void);
 
 
 /**@brief	Function to transmit data via the established BLE-connection.
@@ -161,12 +143,6 @@ void 		ble_set_on_connect_callback(ble_on_connect_callback_t 			ble_on_connect_c
  * @param [in] 	ble_on_disconnect_callback		The callback function that should be called.
  */
 void 		ble_set_on_disconnect_callback(ble_on_disconnect_callback_t 	ble_on_disconnect_callback);
-
-/**@brief	Function to set the on scan timeout callback function.
- *
- * @param [in] 	ble_on_scan_timeout_callback	The callback function that should be called.
- */
-void 		ble_set_on_scan_timeout_callback(ble_on_scan_timeout_callback_t ble_on_scan_timeout_callback);
 
 /**@brief	Function to set the on scan report callback function.
  *

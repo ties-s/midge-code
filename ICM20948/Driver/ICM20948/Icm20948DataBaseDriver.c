@@ -261,8 +261,8 @@ int inv_icm20948_initialize_lower_driver(struct inv_icm20948 * s, enum SMARTSENS
 	// Enable Interrupts.
 //	data = 0x2;
 //	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE, 1, &data); // Enable DMP Interrupt
-//	data = 0x1;
-//	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE_2, 1, &data); // Enable FIFO Overflow Interrupt
+	data = 0x1;
+	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE_2, 1, &data); // Enable FIFO Overflow Interrupt
 	data = 0x1;
 	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE_3, 1, &data); // Enable FIFO Watermark
 
@@ -340,7 +340,6 @@ int inv_icm20948_set_slave_compass_id(struct inv_icm20948 * s, int id)
 	int result = 0;
 	(void)id;
 
-	// TODO: was commented out
 	result = inv_icm20948_wakeup_mems(s);
 	if (result)
 		return result;

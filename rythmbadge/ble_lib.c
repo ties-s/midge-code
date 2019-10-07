@@ -1,12 +1,8 @@
 #include "ble_lib.h"
 #include "advertiser_lib.h"		// For the advertising configuration	
-
-#include "system_event_lib.h"
-
 #include "ble_advertising.h"
 #include "ble_gap.h"
 #include "ble_nus.h"
-//#include "softdevice_handler.h"	// Needed for softdevice_ble_evt_handler_set()
 
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
@@ -14,12 +10,12 @@
 #include "nrf_log.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
+#include "nrf_ble_scan.h"
 
-#include "ble_hci.h"			// Needed for BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION in disconnect()
+#include "ble_hci.h"
 
 #define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
-
 
 #define SEC_PARAM_BOND                  1                                           /**< Perform bonding. */
 #define SEC_PARAM_MITM                  0                                           /**< Man In The Middle protection not required. */
@@ -33,13 +29,12 @@ BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                               
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                             /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
+NRF_BLE_SCAN_DEF(m_scan);
 
 
 static ble_uuid_t adv_uuids[] = {{BLE_UUID_NUS_SERVICE,     BLE_UUID_TYPE_BLE}};  	/**< Universally unique service identifiers of the NUS service for advertising. */
 static ble_gap_sec_params_t		ble_sec_params;                               		/**< Security requirements for this application. */
 static uint16_t                 ble_conn_handle = BLE_CONN_HANDLE_INVALID;    		/**< Handle of the current connection. */
-
-static uint8_t	ble_state;														/**< The current BLE-state. */ 
 
 
 
@@ -47,7 +42,6 @@ static ble_on_receive_callback_t		external_ble_on_receive_callback = NULL;		/**<
 static ble_on_transmit_callback_t		external_ble_on_transmit_callback = NULL;		/**< The external on transmit callback function */
 static ble_on_connect_callback_t		external_ble_on_connect_callback = NULL;		/**< The external on connect callback function */
 static ble_on_disconnect_callback_t		external_ble_on_disconnect_callback = NULL;		/**< The external on disconnect callback function */
-static ble_on_scan_timeout_callback_t	external_ble_on_scan_timeout_callback = NULL;	/**< The external on scan timeout callback function */
 static ble_on_scan_report_callback_t	external_ble_on_scan_report_callback = NULL;	/**< The external on scan report callback function */
 
 
@@ -60,19 +54,66 @@ static void ble_nus_on_transmit_complete_callback(void);
 static void ble_on_connect_callback(void);
 static void ble_on_disconnect_callback(void);
 static void ble_on_scan_report_callback(const ble_gap_evt_adv_report_t* scan_report);
-static void ble_on_scan_timeout_callback(void);
 
 
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context);
 
 
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+   switch(p_scan_evt->scan_evt_id)
+   {
+       case NRF_BLE_SCAN_EVT_FILTER_MATCH:
+           ble_on_scan_report_callback(p_scan_evt->params.filter_match.p_adv_report);
+           break;
+       default:
+         break;
+   }
+}
 
-ret_code_t ble_init(void) {
-	
-	
-	ble_state = BLE_STATE_INACTIVE;
-	
-	
+
+ret_code_t ble_start_scanning(uint16_t scan_interval_ms, uint16_t scan_window_ms)
+{
+	ret_code_t ret;
+
+	ble_gap_scan_params_t scan_parameters;
+	memset(&scan_parameters, 0, sizeof(scan_parameters));
+
+	scan_parameters.interval	= (uint16_t)((((uint32_t)(scan_interval_ms)) * 1000) / 625);;
+	scan_parameters.window  	= (uint16_t)((((uint32_t)(scan_window_ms)) * 1000) / 625);;
+
+	nrf_ble_scan_init_t scan_init;
+	memset(&scan_init, 0, sizeof(scan_init));
+
+	scan_init.p_scan_param     	= &scan_parameters;
+	scan_init.connect_if_match 	= false;
+	scan_init.p_conn_param		= NULL;
+	scan_init.conn_cfg_tag     	= APP_BLE_CONN_CFG_TAG;
+
+	ret = nrf_ble_scan_init(&m_scan, &scan_init, scan_evt_handler);
+	if(ret != NRF_SUCCESS) return ret;
+
+    // Setting filters for scanning.
+	ret = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_NAME_FILTER, false);
+	if(ret != NRF_SUCCESS) return ret;
+
+    ret = nrf_ble_scan_filter_set(&m_scan, SCAN_NAME_FILTER, ADVERTISING_DEVICE_NAME);
+    if(ret != NRF_SUCCESS) return ret;
+
+    ret = nrf_ble_scan_start(&m_scan);
+    if(ret != NRF_SUCCESS) return ret;
+
+	return NRF_SUCCESS;
+}
+
+void ble_stop_scanning(void)
+{
+	nrf_ble_scan_stop();
+}
+
+
+ret_code_t ble_init(void)
+{
 	ret_code_t ret;    
   
     ret = nrf_sdh_enable_request();
@@ -90,14 +131,8 @@ ret_code_t ble_init(void) {
 
     NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
     
-
-	// TODO: call in main.c
-	system_event_init();
-
-
 //    peer_manager_init();
 //    gap_params_init();
-//    gatt_init();
 
     ret = nrf_ble_gatt_init(&m_gatt, NULL);
     if(ret != NRF_SUCCESS) return ret;
@@ -163,11 +198,6 @@ static ret_code_t ble_init_services(void)
  */
 static ret_code_t ble_init_advertising(void) {
 	ret_code_t ret;
-
-	// The sys-event handler is needed to synchronize flash and advertising processes. TODO: do we need this? no flash operation is taking place
-	ret = system_event_register_handler(ble_advertising_on_sys_evt);
-	if(ret != NRF_SUCCESS) return ret;
-	
 
     ble_gap_conn_sec_mode_t sec_mode;
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);  //no security needed
@@ -253,46 +283,8 @@ ret_code_t ble_start_advertising(void)
 
 	ret_code_t ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
 	if(ret != NRF_SUCCESS) return ret;
-	
-	
-	ble_state |= BLE_STATE_ADVERTISING;
-	
+
 	return ret;
-}
-
-void ble_stop_advertising(void) {
-	// Advertising can't be stopped directly, but if an advertising timeout occurs, the advertising shouldn't be started again.
-	ble_state &= ~BLE_STATE_ADVERTISING;
-}
-
-
-
-ret_code_t ble_start_scanning(uint16_t scan_interval_ms, uint16_t scan_window_ms, uint16_t scan_duration_seconds) {
-	ble_gap_scan_params_t scan_params;
-	
-	scan_params.active = 0;  			// passive scanning, only looking for advertising packets
-//    scan_params.selective = 0;  		// non-selective, don't use whitelist
-//    scan_params.p_whitelist = NULL;  	// no whitelist
-    scan_params.interval 	= (uint16_t)((((uint32_t)(scan_interval_ms)) * 1000) / 625);	// scan_params uses interval in units of 0.625ms
-    scan_params.window 		= (uint16_t)((((uint32_t)(scan_window_ms)) * 1000) / 625);  	// window also in units of 0.625ms
-    scan_params.timeout 	= scan_duration_seconds;                			// timeout is in s
-	
-	sd_ble_gap_scan_stop();  // stop any in-progress scans
-
-	ble_data_t scan_data;
-	ret_code_t ret = sd_ble_gap_scan_start(&scan_params, &scan_data); // start a new scan
-
-	if(ret != NRF_SUCCESS) return ret;
-	
-	ble_state |= BLE_STATE_SCANNING;
-	
-	return NRF_SUCCESS;
-}
-
-void ble_stop_scanning(void) {
-	sd_ble_gap_scan_stop();  // stop any in-progress scans
-
-	ble_state &= ~BLE_STATE_SCANNING;
 }
 
 
@@ -301,32 +293,15 @@ void ble_stop_scanning(void) {
  *
  * @param[in]	p_ble_evt	Pointer to the BLE-event generated by the Softdevice.
  */
-static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
-	
-//	NRF_LOG_INFO("ble_evt: %d", p_ble_evt->header.evt_id);
-	
-	uint32_t ret;
-	
-	// security-related
-    static ble_gap_evt_auth_status_t m_auth_status;
-    bool                             master_id_matches;
-    ble_gap_sec_kdist_t *            p_distributed_keys;
-    ble_gap_enc_info_t *             p_enc_info;
-    ble_gap_irk_t *                  p_id_info;
-    ble_gap_sign_info_t *            p_sign_info;
-    static ble_gap_enc_key_t         m_enc_key;           /**< Encryption Key (Encryption Info and Master ID). */
-    static ble_gap_id_key_t          m_id_key;            /**< Identity Key (IRK and address). */
-    static ble_gap_sign_info_t       m_sign_key;          /**< Signing Key (Connection Signature Resolving Key). */
-    static ble_gap_sec_keyset_t      m_keys = {.keys_own = {&m_enc_key, &m_id_key, &m_sign_key}};
-
-
+static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
+{
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
             ble_nus_on_transmit_complete_callback();
             break;
         case BLE_GAP_EVT_CONNECTED:  //on BLE connect event
-            NRF_LOG_INFO("BLE: connection intervals: %u, %u, %u, %u\n", p_ble_evt->evt.gap_evt.params.connected.conn_params.min_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.max_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.slave_latency, p_ble_evt->evt.gap_evt.params.connected.conn_params.conn_sup_timeout);
+//            NRF_LOG_INFO("BLE: connection intervals: %u, %u, %u, %u\n", p_ble_evt->evt.gap_evt.params.connected.conn_params.min_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.max_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.slave_latency, p_ble_evt->evt.gap_evt.params.connected.conn_params.conn_sup_timeout);
             ble_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             nrf_ble_qwr_conn_handle_assign(&m_qwr, ble_conn_handle);
             ble_on_connect_callback();
@@ -335,71 +310,11 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context) {
             ble_conn_handle = BLE_CONN_HANDLE_INVALID;
             ble_on_disconnect_callback();
             break;
-        case BLE_GAP_EVT_ADV_REPORT:  //On receipt of a response to an advertising request (during a scan)
-            ble_on_scan_report_callback(&(p_ble_evt->evt.gap_evt.params.adv_report));
-            break;        
-        case BLE_GAP_EVT_TIMEOUT:
-            if(p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_SCAN)  {
-                ble_on_scan_timeout_callback();
-            }            
-            break;
-            
-        case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
-            ret = sd_ble_gap_sec_params_reply(ble_conn_handle,
-                                                   BLE_GAP_SEC_STATUS_SUCCESS,
-                                                   &ble_sec_params,
-                                                   &m_keys);
-            (void) ret;
-            break;
-        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
-            ret = sd_ble_gatts_sys_attr_set(ble_conn_handle,
-                                                 NULL,
-                                                 0,
-                                                 BLE_GATTS_SYS_ATTR_FLAG_SYS_SRVCS | BLE_GATTS_SYS_ATTR_FLAG_USR_SRVCS);
-            (void) ret;
-            break;
-        case BLE_GAP_EVT_AUTH_STATUS:
-            m_auth_status = p_ble_evt->evt.gap_evt.params.auth_status;
-            break;
-        case BLE_GAP_EVT_SEC_INFO_REQUEST:
-            master_id_matches  = memcmp(&p_ble_evt->evt.gap_evt.params.sec_info_request.master_id,
-                                        &m_enc_key.master_id,
-                                        sizeof(ble_gap_master_id_t)) == 0;
-            p_distributed_keys = &m_auth_status.kdist_own;
 
-            p_enc_info  = (p_distributed_keys->enc  && master_id_matches) ? &m_enc_key.enc_info : NULL;
-            p_id_info   = (p_distributed_keys->id   && master_id_matches) ? &m_id_key.id_info   : NULL;
-            p_sign_info = (p_distributed_keys->sign && master_id_matches) ? &m_sign_key         : NULL;
-
-            ret = sd_ble_gap_sec_info_reply(ble_conn_handle, p_enc_info, p_id_info, p_sign_info);
-            (void) ret;
-            break;
         default:
             break;
     }
-	
-	
-	
-	// Intercept advertising timeout events to implement infinite advertising, and disconnect events to let radio-conflicting 
-    //   operations to execute after a connection closes
-    if( p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_SET_TERMINATED    // if timeout event from advertising
-        || p_ble_evt->header.evt_id == BLE_GAP_EVT_DISCONNECTED) {                              // OR if disconnect event
-		
-		
-		// Restart the advertiting
-		if(ble_state & BLE_STATE_ADVERTISING) {
-			ble_start_advertising();
-		}		
-    } else {
-        ble_advertising_on_ble_evt(p_ble_evt,&m_advertising);
-    }
-	
-	
-	
-    
 }
-
-
 
 
 /**@brief Handler function that is called when some data were received via the Nordic Uart Service.
@@ -426,16 +341,16 @@ static void ble_nus_on_transmit_complete_callback(void) {
 
 /**@brief Handler function that is called when a BLE-connection was established.
  */
-static void ble_on_connect_callback(void) {
-	ble_state |= BLE_STATE_CONNECTED;
+static void ble_on_connect_callback(void)
+{
 	if(external_ble_on_connect_callback != NULL)
 		external_ble_on_connect_callback();	
 }
 
 /**@brief Handler function that is called when disconnecting from an exisiting BLE-connection.
  */
-static void ble_on_disconnect_callback(void) {
-	ble_state &= ~BLE_STATE_CONNECTED;
+static void ble_on_disconnect_callback(void)
+{
 	if(external_ble_on_disconnect_callback != NULL)
 		external_ble_on_disconnect_callback();
 }
@@ -444,23 +359,13 @@ static void ble_on_disconnect_callback(void) {
  *
  * @param[in]	scan_report		Pointer to the advertsising report event.
  */
-static void ble_on_scan_report_callback(const ble_gap_evt_adv_report_t* scan_report) {
+static void ble_on_scan_report_callback(const ble_gap_evt_adv_report_t* scan_report)
+{
 	if(external_ble_on_scan_report_callback != NULL)
 		external_ble_on_scan_report_callback(scan_report);
 
 	//NRF_LOG_INFO("BLE: BLE on scan report callback. RSSI: %d\n", scan_report->rssi);
 }
-
-/**@brief Handler function that is called when the scan process timed-out.
- */
-static void ble_on_scan_timeout_callback(void) {
-	ble_state &= ~BLE_STATE_SCANNING;
-	if(external_ble_on_scan_timeout_callback != NULL)
-		external_ble_on_scan_timeout_callback();
-	
-	//NRF_LOG_INFO("BLE: BLE on scan timeout callback\n");
-}
-
 
 
 // BLE_GAP_ADDR_LEN = 6 from ble_gap.h
@@ -474,30 +379,16 @@ void ble_get_MAC_address(uint8_t* MAC_address) {
 }
 
 
-
-ble_state_t ble_get_state(void) {
-	if(ble_state & BLE_STATE_CONNECTED) {	// BLE_STATE_CONNECTED has higher priority than BLE_STATE_SCANNING and BLE_STATE_ADVERTISING!
-		return BLE_STATE_CONNECTED;
-	} else if (ble_state & BLE_STATE_SCANNING) {	// BLE_STATE_SCANNING has higher priority than BLE_STATE_ADVERTISING!
-		return BLE_STATE_SCANNING;
-	} else if(ble_state & BLE_STATE_ADVERTISING) {
-		return BLE_STATE_ADVERTISING;
-	} 
-	return BLE_STATE_INACTIVE;
-}
-
-
-
-ret_code_t ble_transmit(uint8_t* data, uint16_t len) {
-
+ret_code_t ble_transmit(uint8_t* data, uint16_t len)
+{
 	ret_code_t ret = ble_nus_data_send(&m_nus, data, &len, ble_conn_handle);
-	NRF_LOG_INFO("sent: %d bytes, ret: %x", len, ret);
-
+//	NRF_LOG_INFO("sent: %d bytes, ret: %x", len, ret);
 	return ret;
 }
 
 
-void ble_disconnect(void) {
+void ble_disconnect(void)
+{
 	sd_ble_gap_disconnect(ble_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
 }
 
@@ -519,11 +410,8 @@ void ble_set_on_disconnect_callback(ble_on_disconnect_callback_t ble_on_disconne
 	external_ble_on_disconnect_callback = ble_on_disconnect_callback;
 }
 
-void ble_set_on_scan_timeout_callback(ble_on_scan_timeout_callback_t ble_on_scan_timeout_callback) {
-	external_ble_on_scan_timeout_callback = ble_on_scan_timeout_callback;
-}
-
-void ble_set_on_scan_report_callback(ble_on_scan_report_callback_t ble_on_scan_report_callback) {
+void ble_set_on_scan_report_callback(ble_on_scan_report_callback_t ble_on_scan_report_callback)
+{
 	external_ble_on_scan_report_callback = ble_on_scan_report_callback;
 }
 

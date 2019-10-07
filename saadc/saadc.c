@@ -70,7 +70,7 @@ void saadc_event_handler(nrf_drv_saadc_evt_t const * p_event)
 	    batt_lvl_in_percentage = BATT_MEAS_VOLTAGE_TO_SOC[voltage_vector_element];
 	    advertiser_set_battery_percentage(batt_lvl_in_percentage);
 
-		NRF_LOG_INFO("Battery voltage: %d, percentage: %d%%", batt_lvl_in_milli_volts, batt_lvl_in_percentage);
+//		NRF_LOG_INFO("Battery voltage: %d, percentage: %d%%", batt_lvl_in_milli_volts, batt_lvl_in_percentage);
 
 	}
 }

@@ -15,7 +15,7 @@
 #define INV20948_ABS(x) (((x) < 0) ? -(x) : (x))
 
 
-#define IMU_BUFFER_SIZE 40
+#define IMU_BUFFER_SIZE 64
 
 typedef struct {
 	uint64_t timestamp;
@@ -23,6 +23,7 @@ typedef struct {
 		float axis[3];
 		float quat[4];
 	};
+	uint32_t dummy_to_32B;
 } imu_sample_t;
 
 

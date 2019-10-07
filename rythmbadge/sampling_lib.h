@@ -75,7 +75,7 @@ ret_code_t sampling_stop_imu(void);
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
  */
-ret_code_t sampling_start_microphone(void);
+ret_code_t sampling_start_microphone();
 
 /**@brief Function to stop the microphone data recording or streaming.
  *
@@ -90,19 +90,13 @@ ret_code_t sampling_stop_microphone(void);
 
 /**@brief Function to start the scan data recording or streaming.
  *
- * @param[in]	timeout_ms 					The timeout for the scan in milliseconds  (0 --> no timeout).
- * @param[in]	period_seconds 				The period at which the scan-sampling should be done.
  * @param[in]	interval_ms 				The interval of the scan.
  * @param[in]	window_ms 					The window of the scan.
- * @param[in]	duration_seconds 			The duration of the scan.
- * @param[in]	group_filter 				The group that should be filtered out. If 0xFF nothing is filtered.
- * @param[in]	aggregation_type 			The aggregation type for the seen devices: [SCAN_CHUNK_AGGREGATE_TYPE_MAX] == MAX, [SCAN_CHUNK_AGGREGATE_TYPE_MEAN] == MEAN.
- * @param[in]	streaming					Flag if streaming or data acquisition should be enabled [0 == data-acquisistion, 1 == streaming].
  *
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
  */
-ret_code_t sampling_start_scan(uint32_t timeout_ms, uint16_t period_seconds, uint16_t interval_ms, uint16_t window_ms, uint16_t duration_seconds, uint8_t group_filter, uint8_t aggregation_type, uint8_t streaming);
+ret_code_t sampling_start_scan(uint16_t interval_ms, uint16_t window_ms);
 
 /**@brief Function to stop the scan data recording or streaming.
  *
@@ -111,7 +105,7 @@ ret_code_t sampling_start_scan(uint32_t timeout_ms, uint16_t period_seconds, uin
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
  */
-void 	   sampling_stop_scan(uint8_t streaming);
+ret_code_t sampling_stop_scan(void);
 
 
 

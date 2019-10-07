@@ -1,5 +1,6 @@
-#include "request_handler_lib_02v1.h"
+#include "request_handler_lib.h"
 
+#include <protocol_messages.h>
 #include <string.h>
 #include "app_fifo.h"
 #include "app_scheduler.h"
@@ -7,13 +8,8 @@
 #include "systick_lib.h"
 #include "sampling_lib.h"
 #include "advertiser_lib.h"	// To retrieve the current badge-assignement and set the clock-sync status
-
-#include "protocol_messages_02v1.h"
-
-#ifndef UNIT_TEST
-//#include "custom_board.h"
+#include "storage.h" // getfreespace
 #include "nrf_gpio.h"
-#endif
 
 #include "nrf_log.h"
 #include "boards.h"
@@ -36,8 +32,6 @@ typedef struct {
 	Response					response;
 } response_event_t;
 
-
-//typedef void (* request_handler_t)(request_event_t* request_event);
 typedef void (* request_handler_t)(void * p_event_data, uint16_t event_size);
 
 typedef struct {
@@ -72,11 +66,13 @@ static void stop_imu_request_handler(void * p_event_data, uint16_t event_size);
 
 static void identify_request_handler(void * p_event_data, uint16_t event_size);
 static void restart_request_handler(void * p_event_data, uint16_t event_size);
+static void free_sdc_space_request_handler(void * p_event_data, uint16_t event_size);
 
 static void status_response_handler(void * p_event_data, uint16_t event_size);
 static void start_microphone_response_handler(void * p_event_data, uint16_t event_size);
 static void start_scan_response_handler(void * p_event_data, uint16_t event_size);
 static void start_imu_response_handler(void * p_event_data, uint16_t event_size);
+static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_size);
 
 
 static request_handler_for_type_t request_handlers[] = {
@@ -115,6 +111,10 @@ static request_handler_for_type_t request_handlers[] = {
 		{
                 .type = Request_restart_request_tag,
                 .handler = restart_request_handler,
+        },
+		{
+                .type = Request_free_sdc_space_request_tag,
+                .handler = free_sdc_space_request_handler,
         }
 };
 
@@ -177,11 +177,6 @@ static ret_code_t start_receive_notification(app_sched_event_handler_t reschedul
 }
 
 
-static void finish_response(void)
-{
-	processing_response = 0;
-}
-
 static ret_code_t start_response(app_sched_event_handler_t reschedule_handler)
 {
 	if(processing_response)
@@ -201,7 +196,7 @@ static void finish_error(void)
 	NRF_LOG_INFO("REQUEST_HANDLER: Error while processing request/response --> Disconnect!!!\n");
 	sender_disconnect();	// To clear the RX- and TX-FIFO
 	finish_receive_notification();
-	finish_response();
+	processing_response = 0;
 }
 
 
@@ -378,7 +373,7 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 	response_event.response_retries++;
 	
 	
-	uint32_t len = sizeof(request_event.request);
+	uint32_t len = sizeof(response_event.response.type); // no point in this, it is always the size of the largest entry = 16bytes for get free space
 	memcpy(&notserialized_buf[2], &(response_event.response), len);
 	
 	ret_code_t ret = NRF_SUCCESS;
@@ -391,13 +386,12 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 
 	if(ret == NRF_SUCCESS) {
 		
-		finish_response();	// We are now done with this reponse
+		processing_response = 0;	// We are now done with this reponse
 	
 	} else {
 		if(ret == NRF_ERROR_NO_MEM)	// Only reschedule a fail handler, if we could not transmit because of memory problems
 			if(response_event.response_fail_handler != NULL) {	// This function should actually always be set..
 				app_sched_event_put(NULL, 0, response_event.response_fail_handler);
-				// Here we are not done with the response, so don't call the finish_response()-function
 				return;
 			}
 		// Some BLE-problems occured (e.g. disconnected...)
@@ -449,7 +443,8 @@ static void start_microphone_response_handler(void * p_event_data, uint16_t even
 }
 
 
-static void start_scan_response_handler(void * p_event_data, uint16_t event_size) {
+static void start_scan_response_handler(void * p_event_data, uint16_t event_size)
+{
 	if(start_response(start_scan_response_handler) != NRF_SUCCESS)
 		return;
 	
@@ -473,14 +468,23 @@ static void start_imu_response_handler(void * p_event_data, uint16_t event_size)
 	send_response(NULL, 0);	
 }
 
+static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_size)
+{
+	response_event.response.which_type = Response_free_sdc_space_response_tag;
+	response_event.response_retries = 0;
+	if (sampling_get_sampling_configuration() == 0) //if sd card is writing, we will drop samples
+		storage_get_free_space(&response_event.response.type.free_sdc_space_response.total_space, &response_event.response.type.free_sdc_space_response.free_space);
+	response_event.response.type.free_sdc_space_response.timestamp = response_timestamp;
+
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
 
 
 
 
 
 /**< These are the request handlers that actually call the response-handlers via the scheduler */
-
-
 
 static void status_request_handler(void * p_event_data, uint16_t event_size) {
 
@@ -491,23 +495,13 @@ static void status_request_handler(void * p_event_data, uint16_t event_size) {
 	
 	if(request_event.request.type.status_request.has_badge_assignement) {		
 		
-		BadgeAssignement badge_assignement;
+		BadgeAssignment badge_assignement;
 		badge_assignement = request_event.request.type.status_request.badge_assignement;
 		
-		ret_code_t ret = advertiser_set_badge_assignement(badge_assignement);
-		if(ret == NRF_ERROR_INTERNAL) {
-			app_sched_event_put(NULL, 0, status_request_handler);
-			return;
-		} else if(ret != NRF_SUCCESS) {
-			finish_error();
-			return;
-		} 
-		// ret should be NRF_SUCCESS here
+		advertiser_set_badge_assignement(badge_assignement);
 	}
 	
 	app_sched_event_put(NULL, 0, status_response_handler);
-	// Don't finish it here, but in the response-handler (because of the response_timestamp and response_clock_status)
-	//finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 }
 
 
@@ -524,58 +518,43 @@ static void start_microphone_request_handler(void * p_event_data, uint16_t event
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_microphone_response_handler);
-		// Don't finish it here, but in the response-handler (because of the response_timestamp and response_clock_status)
-		//finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
 	} else {
-		// TODO: Error counter for rescheduling
-		app_sched_event_put(NULL, 0, start_microphone_request_handler);
+		app_sched_event_put(NULL, 0, restart_request_handler);
 	}
 }
 
 static void stop_microphone_request_handler(void * p_event_data, uint16_t event_size)
 {
 	sampling_stop_microphone();
-	
 	NRF_LOG_INFO("REQUEST_HANDLER: Stop microphone\n");
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
 }
 
-static void start_scan_request_handler(void * p_event_data, uint16_t event_size) {
-
+static void start_scan_request_handler(void * p_event_data, uint16_t event_size)
+{
 	// Set the timestamp:
 	Timestamp timestamp = (request_event.request).type.start_scan_request.timestamp;
 	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
 	advertiser_set_status_flag_is_clock_synced(1);
 	
-	uint32_t timeout	= (request_event.request).type.start_scan_request.timeout;
 	uint16_t window	 	= (request_event.request).type.start_scan_request.window;
 	uint16_t interval 	= (request_event.request).type.start_scan_request.interval;
-	uint16_t duration 	= (request_event.request).type.start_scan_request.duration;
-	uint16_t period 	= (request_event.request).type.start_scan_request.period;
-	uint8_t  aggregation_type 	= (request_event.request).type.start_scan_request.aggregation_type;
 	
-	if(duration > period)
-		period = duration; 
-	
-	NRF_LOG_INFO("REQUEST_HANDLER: Start scanning with timeout: %u, window: %u, interval: %u, duration: %u, period: %u, aggregation_type: %u\n", timeout, window, interval, duration, period, aggregation_type);
-	BadgeAssignement badge_assignement;
-	advertiser_get_badge_assignement(&badge_assignement);
-//	ret_code_t ret = sampling_start_scan(timeout*60*1000, period, interval, window, duration, badge_assignement.group, aggregation_type, 0);
-//	NRF_LOG_INFO("REQUEST_HANDLER: Ret sampling_start_scan: %d\n\r", ret);
-//
-//
-//	if(ret == NRF_SUCCESS) {
-//		app_sched_event_put(NULL, 0, start_scan_response_handler);
-//		// Don't finish it here, but in the response-handler (because of the response_timestamp and response_clock_status)
-//		//finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
-//	} else {
-//		// TODO: Error counter for rescheduling
-//		app_sched_event_put(NULL, 0, start_scan_request_handler);
-//	}
+	NRF_LOG_INFO("REQUEST_HANDLER: Start scanning with window: %u, interval: %u\n", window, interval);
+
+	ret_code_t ret = sampling_start_scan(interval, window);
+	NRF_LOG_INFO("REQUEST_HANDLER: Ret sampling_start_scan: %d\n\r", ret);
+
+	if(ret == NRF_SUCCESS) {
+		app_sched_event_put(NULL, 0, start_scan_response_handler);
+	} else {
+		app_sched_event_put(NULL, 0, restart_request_handler);
+	}
 }
 
-static void stop_scan_request_handler(void * p_event_data, uint16_t event_size) {
-//	sampling_stop_scan(0);
+static void stop_scan_request_handler(void * p_event_data, uint16_t event_size)
+{
+	sampling_stop_scan();
 	NRF_LOG_INFO("REQUEST_HANDLER: Stop scan\n");
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
 }
@@ -598,11 +577,8 @@ static void start_imu_request_handler(void * p_event_data, uint16_t event_size)
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_imu_response_handler);
-		// Don't finish it here, but in the response-handler (because of the response_timestamp and response_clock_status)
-		//finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
 	} else {
-		// TODO: Error counter for rescheduling
-		app_sched_event_put(NULL, 0, start_imu_request_handler);
+		app_sched_event_put(NULL, 0, restart_request_handler);
 	}
 }
 
@@ -634,4 +610,11 @@ static void restart_request_handler(void * p_event_data, uint16_t event_size) {
 	NVIC_SystemReset();
 	#endif
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
+}
+
+static void free_sdc_space_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: Free sdc space request handler\n");
+
+	app_sched_event_put(NULL, 0, free_sdc_space_response_handler);
 }
