@@ -3,7 +3,6 @@ import logging
 import sys
 import threading
 
-
 from badge import *
 from ble_badge_connection import *
 from bluepy import *
