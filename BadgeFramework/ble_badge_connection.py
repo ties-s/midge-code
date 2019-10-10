@@ -10,7 +10,7 @@ from bluepy import *
 from bluepy import btle
 from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
 from bluepy.btle import BTLEException
-import struct	
+import struct
 import Queue
 
 logger = logging.getLogger(__name__)
@@ -33,17 +33,35 @@ class SimpleDelegate(DefaultDelegate):
     def handleNotification(self, cHandle, data):
         self.bleconn.received(data)
 
+class Peripheral2(Peripheral):
+    def _getResp(self, wantType, timeout=5):
+        if isinstance(wantType, list) is not True:
+            wantType = [wantType]
 
+        while True:
+            resp = self._waitResp(wantType + ['ntfy', 'ind'], timeout)
+            if resp is None:
+                return None
+
+            respType = resp['rsp'][0]
+            if respType == 'ntfy' or respType == 'ind':
+                hnd = resp['hnd'][0]
+                data = resp['d'][0]
+                if self.delegate is not None:
+                    self.delegate.handleNotification(hnd, data)
+                if respType not in wantType:
+                    continue
+            return resp
 
 # BLEBadgeConnection represents a connection to 'ble_device', a badge connected over BLE.
 #    ('ble_device' should be a device from the Bluefruit Library)
 # This class implements the BadgeConnection interface to communicate with
 #   a badge over the BLE UART service using the Adafruit BlueFruit Library.
-# This class implements an additional class method, BLEBadgeConnection.get_connection_to_badge(), 
+# This class implements an additional class method, BLEBadgeConnection.get_connection_to_badge(),
 #   that can be used to retrieve an instance of this class that represents a connection to a badge with
 #   the given ID. This class method should be the main way clients instantiate new BLEBadgeConnections.
 class BLEBadgeConnection(BadgeConnection):
-	
+
 	def __init__(self, ble_device):
 		self.ble_device = ble_device
 
@@ -53,19 +71,19 @@ class BLEBadgeConnection(BadgeConnection):
 		self.rx = None
 		self.tx = None
 		self.conn = None
-		
+
 
 		# Contains the bytes recieved from the device. Held here until an entire message is recieved.
 		self.rx_queue = Queue.Queue()
-		
-		
+
+
 		BadgeConnection.__init__(self)
 
 	# Returns a BLEBadgeConnection() to the first badge it sees, or none if a badge
 	#   could not be found in timeout_seconds seconds. (Default is 10)
 	@classmethod
 	def get_connection_to_badge(cls, device_addr, timeout_seconds=10.0):
-		
+
 		return cls(device_addr)
 
 
@@ -76,17 +94,16 @@ class BLEBadgeConnection(BadgeConnection):
 
 	def received(self,data):
 		logger.debug("Recieved {}".format(data.encode("hex")))
-		
+
 		for b in data:
 			self.rx_queue.put(b)
-			
-		
 
-	# Implements BadgeConnection's connect() spec.	
+
+	# Implements BadgeConnection's connect() spec.
 	def connect(self):
 		logger.debug("Connecting...")
-		self.conn = btle.Peripheral(self.ble_device, btle.ADDR_TYPE_RANDOM)
-		
+		self.conn = Peripheral2(self.ble_device, btle.ADDR_TYPE_RANDOM)
+
 		logger.debug("Connected.")
 
 		# Find the UART service and its characteristics.
@@ -103,14 +120,14 @@ class BLEBadgeConnection(BadgeConnection):
 
 	# Implements BadgeConnections's disconnect() spec.
 	def disconnect(self):
-		
+
 		self.uart = None
 		self.tx = None
 		self.rx = None
-		
+
 		with self.rx_queue.mutex:
 			self.rx_queue.queue.clear()
-		
+
 		#self.ble_device.disconnect()
 		self.conn.disconnect()
 		self.ble_device = None
@@ -132,17 +149,17 @@ class BLEBadgeConnection(BadgeConnection):
 
 		rx_message = ""
 		rx_bytes_expected = data_len
-		
+
 		if rx_bytes_expected > 0:
 			while True:
 				while(not self.rx_queue.empty()):
 					rx_message += self.rx_queue.get()
 					if(len(rx_message) == rx_bytes_expected):
 						return rx_message
-						
+
 				self.conn.waitForNotifications(5.0)
-		
-			
+
+
 
 	# Implements BadgeConnection's send() spec.
 	def send(self, message, response_len=0):
@@ -151,17 +168,17 @@ class BLEBadgeConnection(BadgeConnection):
 
 		rx_message = ""
 		rx_bytes_expected = response_len
-		
+
 		self.tx.write(message,withResponse=True)
-	
-		
+
+
 		if rx_bytes_expected > 0:
 			while True:
 				while(not self.rx_queue.empty()):
 					rx_message += self.rx_queue.get()
 					if(len(rx_message) == rx_bytes_expected):
 						return rx_message
-						
+
 				self.conn.waitForNotifications(5.0)
-				
-		
+
+

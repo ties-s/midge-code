@@ -21,7 +21,7 @@ def main():
 		return
 
 	device_addr = sys.argv[1]
-	print("Connecting to badge", device_addr)	
+	print("Connecting to badge", device_addr)
 	connection = BLEBadgeConnection.get_connection_to_badge(device_addr)
 
 	if not connection:
@@ -66,21 +66,21 @@ def main():
 
 	def handle_stop_microphone_request(args):
 		badge.stop_microphone()
-	
+
 
 	def handle_start_scan_request(args):
 		print(badge.start_scan())
 
 	def handle_stop_scan_request(args):
 		badge.stop_scan()
-		
-			
+
+
 	def handle_start_imu_request(args):
 		print(badge.start_imu())
 
 	def handle_stop_imu_request(args):
 		badge.stop_imu()
-		
+
 
 	def handle_identify_request(args):
 		if len(args) == 1:
@@ -99,8 +99,8 @@ def main():
 
 	def handle_get_free_space(args):
 		print(badge.get_free_sdc_space())
-		
-		
+
+
 	command_handlers = {
 		"help": print_help,
 		"status": handle_status_request,
@@ -129,7 +129,6 @@ def main():
 		else:
 			print("Command Not Found!")
 			print_help({})
-
 
 if __name__ == "__main__":
 	main()
