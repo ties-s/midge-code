@@ -1,2 +1,5 @@
+_build/*
+*.hex
+*.zip
 BadgeFramework/terminal.py
 BadgeFramework/terminal.py

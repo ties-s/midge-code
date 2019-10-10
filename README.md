@@ -25,13 +25,15 @@ bit 3: imu
 
 ### Audio
 On "high" audio is stereo, 20kHz, 16bit per channel PCM.
-On "low" it is subsampled by a factor of 32, to 635Hz.
+On "low" it is subsampled by a factor of 32, to 625Hz.
 
 It is only timestamped when the file is created (filename is seconds).
 
 ### IMU
-Filename is again timestamped, but also each sample:
-accelerometer, gyro, magnetometer:
+Filename is again timestamped, but also each sample (32 bytes):
+
+accelerometer, gyro, magnetometer sample example:
+2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
 
 First 8 bytes are the timestamp:
 2dd4 a69d 016d 0000   = 0000016da69d2dd4 = 1570458381780 milliseconds = 07/10/2019 2:26:780
@@ -46,6 +48,7 @@ Rotation vector:
 Timestamp is the same 8 bytes, then 4 floats per quaternion, 4 fewer bytes for padding.
 
 ### Scanner
+16 byte length
 Same 8 byte timestamp.
 2 bytes ID
 1 int8_t rssi (signed)

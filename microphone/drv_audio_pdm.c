@@ -122,7 +122,7 @@ ret_code_t drv_audio_init(void)
 	}
 	data_source_info.data_source = AUDIO;
 
-	nrf_drv_pdm_config_t pdm_cfg = NRF_DRV_PDM_DEFAULT_CONFIG(MIC_CLK, MIC_DOUT);
+	nrfx_pdm_config_t pdm_cfg = NRFX_PDM_DEFAULT_CONFIG(MIC_CLK, MIC_DOUT);
 
 	pdm_cfg.gain_l      = 0x40;
 	pdm_cfg.gain_r      = 0x40;
