@@ -694,7 +694,7 @@ class Request:
 
 		def encode_stop_imu_request(self, ostream):
 			self.stop_imu_request.encode_internal(ostream)
-		
+
 		def encode_identify_request(self, ostream):
 			self.identify_request.encode_internal(ostream)
 
@@ -749,7 +749,7 @@ class Request:
 
 		def decode_stop_imu_request(self, istream):
 			self.stop_imu_request = StopImuRequest()
-			self.stop_imu_request.decode_internal(istream)	
+			self.stop_imu_request.decode_internal(istream)
 
 		def decode_identify_request(self, istream):
 			self.identify_request = IdentifyRequest()

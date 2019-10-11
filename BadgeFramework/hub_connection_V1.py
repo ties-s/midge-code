@@ -12,7 +12,9 @@ class Connection():
             self.badge_id = int(pid)
             self.mac_address = address
             self.group_number = int(constant_group_number)
-        except:
+        except Exception as err:
+            #if (err):
+            #    print (str(err))
             raise Exception("Could not connect to participant" + str(pid))
 
     def set_id_at_start(self):
