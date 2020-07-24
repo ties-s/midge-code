@@ -61,10 +61,27 @@ class Connection:
         self.connection.disconnect()
 
     def start(self):
-        self.connect()
-        self.set_id_at_start()
-        self.start_recording_all_sensors()
-        self.disconnect()
+        try:
+            self.connect()
+            self.set_id_at_start()
+            self.get_status()
+            self.start_scan()
+            self.start_microphone()
+            self.start_imu()
+            self.disconnect()
+        except Exception as e:
+            print 'Could not start MIDGE {:d}'.format(self.badge_id)
+            print str(e)
+
+    def stop_all_sensors(self):
+        try:
+            self.stop_scan()
+            self.stop_microphone()
+            self.stop_imu()
+        except Exception as e:
+            print 'Could not start MIDGE {:d}'.format(self.badge_id)
+            print str(e)
+
 
     def set_id_at_start(self):
         try:
@@ -74,64 +91,7 @@ class Connection:
         except Exception as err:
             raise Exception("Could not set id, error:" + str(err))
 
-    def get_status_future(self):
-        future = self.executor.submit(self.handle_status_request)
-        return future
-
     def get_status(self):
-        if self.executor:
-            return self.get_status_future.result()
-        else:
-            return self.handle_status_request()
-
-    def start_microphone(self):
-        if self.executor:
-            return self.executor.submit(self.handle_start_microphone_request).result()
-        else:
-            return self.handle_start_microphone_request()
-
-    def stop_microphone(self):
-        if self.executor:
-            return self.executor.submit(self.handle_stop_microphone_request).result()
-        else:
-            return self.handle_stop_microphone_request()
-
-    def start_imu(self):
-        if self.executor:
-            return self.executor.submit(self.handle_start_imu_request).result()
-        else:
-            return self.handle_start_imu_request()
-
-    def stop_imu(self):
-        if self.executor:
-            return self.executor.submit(self.handle_stop_imu_request).result()
-        else:
-            return self.handle_stop_imu_request()
-
-    def start_scan(self):
-        if self.executor:
-            return self.executor.submit(self.handle_start_scan_request).result()
-        else:
-            return self.handle_start_scan_request()
-
-    def stop_scan(self):
-        if self.executor:
-            return self.executor.submit(self.handle_stop_scan_request).result()
-        else:
-            return self.handle_stop_scan_request()
-
-    def start_recording_all_sensors(self):
-        self.get_status()
-        self.start_scan()
-        self.start_microphone()
-        self.start_imu()
-
-    def stop_recording_all_sensors(self):
-        self.stop_scan()
-        self.stop_microphone()
-        self.stop_imu()
-
-    def handle_status_request(self):
         try:
             self.connect()
             out = self.badge.get_status()
@@ -143,7 +103,7 @@ class Connection:
             raise Exception("Could not get status for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_start_microphone_request(self):
+    def start_microphone(self):
         try:
             self.connect()
             out = self.badge.start_microphone()
@@ -153,7 +113,7 @@ class Connection:
             raise Exception("Could not start mic for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_stop_microphone_request(self):
+    def stop_microphone(self):
         try:
             self.connect()
             self.badge.stop_microphone()
@@ -162,7 +122,7 @@ class Connection:
             raise Exception("Could not stop mic for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_start_scan_request(self):
+    def start_scan(self):
         try:
             self.connect()
             out = self.badge.start_scan()
@@ -172,7 +132,7 @@ class Connection:
             raise Exception("Could not start scan for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_stop_scan_request(self):
+    def stop_scan(self):
         try:
             self.connect()
             self.badge.stop_scan()
@@ -181,7 +141,7 @@ class Connection:
             raise Exception("Could not stop scan for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_start_imu_request(self):
+    def start_imu(self):
         try:
             self.connect()
             out = self.badge.start_imu()
@@ -191,7 +151,7 @@ class Connection:
             raise Exception("Could not start IMU for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_stop_imu_request(self):
+    def stop_imu(self):
         try:
             self.connect()
             self.badge.stop_imu()
@@ -200,7 +160,7 @@ class Connection:
             raise Exception("Could not stop IMU for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_identify_request(self):
+    def identify(self):
         try:
             self.connect()
             out = self.badge.identify()
@@ -210,7 +170,7 @@ class Connection:
             raise Exception("Could not identify for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_restart_request(self):
+    def restart(self):
         try:
             self.connect()
             out = self.badge.restart()
@@ -221,7 +181,7 @@ class Connection:
             raise Exception("Could not restart for participant " + str(self.badge_id)
                             + " , error:" + str(err))
 
-    def handle_get_free_space(self):
+    def get_free_space(self):
         try:
             self.connect()
             out = self.badge.get_free_sdc_space()
@@ -245,7 +205,7 @@ class Connection:
                     self.widgets_dict['mic'].button_style = 'danger'
                 else:
                     self.widgets_dict['mic'].button_style = 'success'
-
+    
                 if self.status.imu_status == 0:
                     self.widgets_dict['imu'].button_style = 'danger'
                 else:
@@ -256,10 +216,11 @@ class Connection:
                 else:
                     self.widgets_dict['scan'].button_style = 'success'
         else:
-            self.widgets_dict['sync'].button_style = 'info'
-            self.widgets_dict['mic'].button_style = 'info'
-            self.widgets_dict['imu'].button_style = 'info'
-            self.widgets_dict['scan'].button_style = 'info'
+            if self.widget is not None:
+                self.widgets_dict['sync'].button_style = 'info'
+                self.widgets_dict['mic'].button_style = 'info'
+                self.widgets_dict['imu'].button_style = 'info'
+                self.widgets_dict['scan'].button_style = 'info'
 
     def create_widget(self):
         # put the buttons in a dict, just for ease of access in update_status

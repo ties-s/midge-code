@@ -16,32 +16,23 @@ class DummyConnection:
     conn_delay = 0.1
     req_delay = 0.1
 
-    def __init__(self, pid, address, executor=None):
+    def __init__(self, pid, address):
         self.badge_id = int(pid)
         self.mac_address = address
-        self.executor = executor
         self.sync_status = False
         self.status = None
         self.widgets_dict = None
         self.widget = None
 
-        # first connection with the device
-        try:
-            self.connect()
-            self.disconnect()
-        except Exception as ex:
-            logger.warning("Error connecting with MIDGE " +
-                           str(pid) + ": " + str(ex))
-
     @staticmethod
-    def from_mapping_file(fpath, executor=None):
+    def from_mapping_file(fpath):
         df = pd.read_csv(fpath)
         connections = list()
         for _, row in df.iterrows():
             current_participant = row["Participant Id"]
             current_mac = row["Mac Address"]
             cur_connection = DummyConnection(
-                current_participant, current_mac, executor)
+                current_participant, current_mac)
 
             connections.append(cur_connection)
         return connections
@@ -50,10 +41,22 @@ class DummyConnection:
         time.sleep(DummyConnection.conn_delay)
 
     def start(self):
-        self.connect()
-        self.set_id_at_start()
-        self.start_recording_all_sensors()
-        self.disconnect()
+        try:
+            self.connect()
+            self.set_id_at_start()
+            self.get_status()
+            self.start_scan()
+            self.start_microphone()
+            self.start_imu()
+            self.disconnect()
+        except Exception as e:
+            print 'Could not start to MIDGE {:d}'.format(self.badge_id)
+            print str(e)
+
+    def stop_all_sensors(self):
+        self.stop_scan()
+        self.stop_microphone()
+        self.stop_imu()
 
     def set_id_at_start(self):
         p = random.random()
@@ -65,51 +68,7 @@ class DummyConnection:
     def disconnect(self):
         time.sleep(DummyConnection.conn_delay)
 
-    def get_status_future(self):
-        future = self.executor.submit(self.handle_status_request)
-        return future
-
-    def status(self):
-        return self.get_status_future.result()
-
-    def start_microphone(self):
-        if self.executor:
-            return self.executor.submit(self.handle_start_microphone_request).result()
-        else:
-            return self.handle_start_microphone_request()
-
-    def stop_microphone(self):
-        if self.executor:
-            return self.executor.submit(self.handle_stop_microphone_request).result()
-        else:
-            return self.handle_stop_microphone_request()
-
-    def start_imu(self):
-        if self.executor:
-            return self.executor.submit(self.handle_start_imu_request).result()
-        else:
-            return self.handle_start_imu_request()
-            
-
-    def stop_imu(self):
-        if self.executor:
-            return self.executor.submit(self.handle_stop_imu_request).result()
-        else:
-            return self.handle_stop_imu_request()
-
-    def start_scan(self):
-        if self.executor:
-            return self.executor.submit(self.handle_start_scan_request).result()
-        else:
-            return self.handle_start_scan_request()
-
-    def stop_scan(self):
-        if self.executor:
-            return self.executor.submit(self.handle_stop_scan_request).result()
-        else:
-            return self.handle_stop_scan_request()
-
-    def handle_status_request(self):
+    def get_status(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
@@ -123,7 +82,7 @@ class DummyConnection:
         self.update_status(True, res)
         return res
 
-    def handle_start_microphone_request(self):
+    def start_microphone(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
@@ -133,14 +92,14 @@ class DummyConnection:
             res = StartMicrophoneResponse()
             return res
 
-    def handle_stop_microphone_request(self):
+    def stop_microphone(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
             raise Exception(
                 "Could not stop mic for participant " + str(self.badge_id))
 
-    def handle_start_scan_request(self):
+    def start_scan(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
@@ -150,14 +109,14 @@ class DummyConnection:
             res = StartScanResponse()
             return res
 
-    def handle_stop_scan_request(self):
+    def stop_scan(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
             raise Exception(
                 "Could not stop scan for participant " + str(self.badge_id))
 
-    def handle_start_imu_request(self):
+    def start_imu(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
@@ -167,14 +126,14 @@ class DummyConnection:
             res = StartImuResponse()
             return res
 
-    def handle_stop_imu_request(self):
+    def stop_imu(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
             raise Exception(
                 "Could not stop IMU for participant " + str(self.badge_id))
 
-    def handle_identify_request(self):
+    def identify(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
@@ -184,7 +143,7 @@ class DummyConnection:
             res = StatusResponse()
             return res
 
-    def handle_restart_request(self):
+    def restart(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
@@ -194,7 +153,7 @@ class DummyConnection:
             res = StatusResponse()
             return res
 
-    def handle_get_free_space(self):
+    def get_free_space(self):
         p = random.random()
         time.sleep(DummyConnection.req_delay)
         if p < 0.1:
@@ -203,17 +162,6 @@ class DummyConnection:
         else:
             res = StatusResponse()
             return res
-
-    def start_recording_all_sensors(self):
-        self.handle_status_request()
-        self.handle_start_scan_request()
-        self.handle_start_microphone_request()
-        self.handle_start_imu_request()
-
-    def stop_recording_all_sensors(self):
-        self.handle_stop_scan_request()
-        self.handle_stop_microphone_request()
-        self.handle_stop_imu_request()
 
     def update_status(self, sync_status, status=None):
         self.sync_status = sync_status
@@ -238,10 +186,11 @@ class DummyConnection:
                 else:
                     self.widgets_dict['scan'].button_style = 'success'
         else:
-            self.widgets_dict['sync'].button_style = 'info'
-            self.widgets_dict['mic'].button_style = 'info'
-            self.widgets_dict['imu'].button_style = 'info'
-            self.widgets_dict['scan'].button_style = 'info'
+            if self.widget is not None:
+                self.widgets_dict['sync'].button_style = 'info'
+                self.widgets_dict['mic'].button_style = 'info'
+                self.widgets_dict['imu'].button_style = 'info'
+                self.widgets_dict['scan'].button_style = 'info'
 
     def create_widget(self):
         # put the buttons in a dict, just for ease of access in update_status
