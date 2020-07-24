@@ -1,5 +1,7 @@
 _build/*
 *.hex
 *.zip
+*.DS_Store
+*.pyc
 BadgeFramework/terminal.py
 BadgeFramework/terminal.py

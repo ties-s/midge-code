@@ -17,7 +17,7 @@ dev2 = 'dc:bc:ed:19:1f:09'
 def dummy_sync(current_participant, current_mac):
     while True:
         time.sleep(2)
-        logger.info(f'connected to participant {current_participant:d}')
+        logger.info('connected to participant {:d}'.format(current_participant))
         sys.stdout.flush()
         # raise Exception(
         #     'could not connect to participant {current_participant:d}')
@@ -26,7 +26,7 @@ def sync(current_participant, current_mac):
     while True:
         try:
             cur_connection = Connection(current_participant, current_mac)
-            logger.info(f'connected to participant {current_participant:d}')
+            logger.info('connected to participant {:d}'.format(current_participant))
         except Exception as error:
             logger.info(str(error) + ", cannot synchronise.")
             sys.stdout.flush()
