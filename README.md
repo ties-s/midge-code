@@ -3,14 +3,14 @@
 ## Advertisment Packet structure
 The advertisment packet has a field called "manufacturer specific data", with type 0xFF. It should start at the 12th byte. Its length is 11 bytes:
 
-typedef struct
-{
-    uint8_t battery;
-    uint8_t status_flags;
-    uint16_t ID;
-    uint8_t group;
-    uint8_t MAC[6];
-} custom_advdata_t;
+    typedef struct
+    {
+        uint8_t battery;
+        uint8_t status_flags;
+        uint16_t ID;
+        uint8_t group;
+        uint8_t MAC[6];
+    } custom_advdata_t;
 
 MAC is set during init, ID and group with the status command.
 Battery is in percentage, and the status flags are :
@@ -33,16 +33,16 @@ It is only timestamped when the file is created (filename is seconds).
 Filename is again timestamped, but also each sample (32 bytes):
 
 accelerometer, gyro, magnetometer sample example:
-2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
+    2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
 
 First 8 bytes are the timestamp:
-2dd4 a69d 016d 0000   = 0000016da69d2dd4 = 1570458381780 milliseconds = 07/10/2019 2:26:780
+    2dd4 a69d 016d 0000   = 0000016da69d2dd4 = 1570458381780 milliseconds = 07/10/2019 2:26:780
 
 4 bytes float per axis:
-0000 3b40   0000 bc48   2000 3f83
+    0000 3b40   0000 bc48   2000 3f83
 
 padding for data alignment
-0000 000c 0000 ffce 0000 1064
+    0000 000c 0000 ffce 0000 1064
 
 Rotation vector:
 Timestamp is the same 8 bytes, then 4 floats per quaternion, 4 fewer bytes for padding.
@@ -59,8 +59,21 @@ Same 8 byte timestamp.
 **the rest should be as you've asked on the requirements, please let me know if something is not clear**
 
 ### Error blinks
-1 blink - clock
-2 blink - timeout
-3 blink - ble
-4 blink - storage
-5 blink - imu related (calibration for example)
+    1 blink - clock
+    2 blink - timeout
+    3 blink - ble
+    4 blink - storage
+    5 blink - imu related (calibration for example)
+
+## Jupyter hub
+
+If Jupyter is not installed, make sure to [install it](https://jupyter.org/install).
+
+First install the dependencies:
+    python -m pip install -r requirements.txt
+
+Then enable ipywidgets for the visualization widgets in Jupyter Notebook / Lab:
+    jupyter nbextension enable --py widgetsnbextension
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager
+
+Now run Jupyter making sure to use the kernel where you installed the requirements. You should be able to go through the notebook in BadgeFramework/hub/hub.ipynb

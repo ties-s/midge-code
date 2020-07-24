@@ -3,6 +3,7 @@ from ble_badge_connection import BLEBadgeConnection
 import sys
 import logging
 import ipywidgets as widgets
+import traceback
 
 import pandas as pd
 
@@ -52,7 +53,6 @@ class Connection:
                             str(self.badge_id) + ", error:"
                             + str(err)
                         )
-                    break
         except Exception as err:
             raise Exception("Could not connect to participant " + str(self.badge_id) + ", error:"
                             + str(err))
@@ -79,17 +79,17 @@ class Connection:
             self.stop_microphone()
             self.stop_imu()
         except Exception as e:
-            print 'Could not start MIDGE {:d}'.format(self.badge_id)
+            print 'Could not stop MIDGE {:d}'.format(self.badge_id)
             print str(e)
 
 
     def set_id_at_start(self):
-        try:
-            self.badge.get_status(
-                new_id=self.badge_id, new_group_number=self.group_number
-            )
-        except Exception as err:
-            raise Exception("Could not set id, error:" + str(err))
+        # try:
+        self.badge.get_status(
+            new_id=self.badge_id, new_group_number=self.group_number
+        )
+        # except Exception as err:
+        #     raise Exception("Could not set id, error:" + str(err))
 
     def get_status(self):
         try:

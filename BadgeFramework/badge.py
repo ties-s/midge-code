@@ -3,7 +3,7 @@ import time
 import logging
 import sys
 import struct
-import queue as Queue
+import Queue
 
 DEFAULT_SCAN_WINDOW = 250
 DEFAULT_SCAN_INTERVAL = 1000
