@@ -59,6 +59,7 @@ Same 8 byte timestamp.
 **the rest should be as you've asked on the requirements, please let me know if something is not clear**
 
 ### Error blinks
+
     1 blink - clock
     2 blink - timeout
     3 blink - ble
@@ -70,9 +71,11 @@ Same 8 byte timestamp.
 If Jupyter is not installed, make sure to [install it](https://jupyter.org/install).
 
 First install the dependencies:
+
     python -m pip install -r requirements.txt
 
 Then enable ipywidgets for the visualization widgets in Jupyter Notebook / Lab:
+
     jupyter nbextension enable --py widgetsnbextension
     jupyter labextension install @jupyter-widgets/jupyterlab-manager
 
