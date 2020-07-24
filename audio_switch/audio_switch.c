@@ -29,7 +29,7 @@ void audio_switch_debounce_timer_handler(void * p_context)
 			{
 				sampling_stop_microphone();
 				audio_switch_position = LOW;
-				sampling_start_microphone();
+				sampling_start_microphone(-1);
 			}
 
 		audio_switch_position = LOW;
@@ -42,7 +42,7 @@ void audio_switch_debounce_timer_handler(void * p_context)
 			{
 				sampling_stop_microphone();
 				audio_switch_position = HIGH;
-				sampling_start_microphone();
+				sampling_start_microphone(-1);
 			}
 
 		audio_switch_position = HIGH;

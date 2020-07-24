@@ -64,9 +64,9 @@ int inv_icm20948_identify_interrupt(struct inv_icm20948 * s, short *int_read)
      * We do not need to handle FIFO overflow here. 
      * When we read FIFO_SIZE we can determine if FIFO overflow has occured.
      */
-//	int_status = 0;
-//    inv_icm20948_read_mems_reg(s, 0x1B, 1, &int_status);
-//    if (int_status) NRF_LOG_HEXDUMP_INFO(&int_status, 1);
+	int_status = 0;
+    inv_icm20948_read_mems_reg(s, 0x1B, 1, &int_status);
+    if (int_status) NRF_LOG_HEXDUMP_INFO(&int_status, 1);
     
 	return result;
 }

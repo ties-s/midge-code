@@ -7,17 +7,16 @@ void check_init_error(ret_code_t ret, uint8_t identifier)
 {
 	if(ret == NRF_SUCCESS)
 		return;
-	while(1)
+	for(uint8_t i = 0; i < identifier; i++)
 	{
-		for(uint8_t i = 0; i < identifier; i++)
-		{
-			nrf_gpio_pin_write(LED, LED_ON);  //turn on LED
-			nrf_delay_ms(200);
-			nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
-			nrf_delay_ms(200);
-		}
-		nrf_delay_ms(2000);
+		nrf_gpio_pin_write(LED, LED_ON);  //turn on LED
+		nrf_delay_ms(200);
+		nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
+		nrf_delay_ms(200);
 	}
+	nrf_delay_ms(500);
+	// After having blinked the error code, reset. Sometimes the sdcard will recover, and the IMU has another chance of re-calibrating itself
+	NVIC_SystemReset();
 }
 
 void led_init_success(void)

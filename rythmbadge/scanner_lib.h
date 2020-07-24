@@ -12,8 +12,9 @@ typedef struct {
 	BadgeAssignment	badge_assignment;
 	int8_t 			rssi;
 } scanner_scan_report_t;
+// 12 bytes
 
-#define SCANNER_BUFFER_LENGTH 128
+#define SCANNER_BUFFER_LENGTH 128 // to get 3*512B (block size)
 extern scanner_scan_report_t scanner_scan_buffer[2][SCANNER_BUFFER_LENGTH];
 
 

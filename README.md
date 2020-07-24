@@ -58,3 +58,9 @@ Same 8 byte timestamp.
 
 **the rest should be as you've asked on the requirements, please let me know if something is not clear**
 
+### Error blinks
+1 blink - clock
+2 blink - timeout
+3 blink - ble
+4 blink - storage
+5 blink - imu related (calibration for example)

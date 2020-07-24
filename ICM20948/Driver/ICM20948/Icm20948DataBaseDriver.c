@@ -255,14 +255,14 @@ int inv_icm20948_initialize_lower_driver(struct inv_icm20948 * s, enum SMARTSENS
 	//result |= dmp_set_data_output_control1(0);   // FIXME in DMP, these should be off by default.
 	result |= dmp_icm20948_reset_control_registers(s);
 	
-	// set FIFO watermark to 80% of actual FIFO size //doesn't work always 540bytes
+	// set FIFO watermark to 80% of actual FIFO size //doesn't work, always 540bytes
 	result |= dmp_icm20948_set_FIFO_watermark(s, 800);
 
 	// Enable Interrupts.
 //	data = 0x2;
 //	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE, 1, &data); // Enable DMP Interrupt
-	data = 0x1;
-	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE_2, 1, &data); // Enable FIFO Overflow Interrupt
+//	data = 0x1;
+//	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE_2, 1, &data); // Enable FIFO Overflow Interrupt
 	data = 0x1;
 	result |= inv_icm20948_write_mems_reg(s, REG_INT_ENABLE_3, 1, &data); // Enable FIFO Watermark
 

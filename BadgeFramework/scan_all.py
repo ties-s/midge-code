@@ -11,7 +11,7 @@ class ScanDelegate(DefaultDelegate):
     #         print "Received new data from", dev.addr
 
 scanner = Scanner().withDelegate(ScanDelegate())
-devices = scanner.scan(10.0)
+devices = scanner.scan(5.0)
 device_temp_name = 'HDBDG'
 midges = []
 
@@ -21,4 +21,4 @@ for dev in devices:
             midges.append(dev)
 
 for midge in midges:
-    print "Device %s, RSSI=%d dB" % (midge.addr, midge.rssi)
+    print ("Device %s, RSSI=%d dB" % (midge.addr, midge.rssi))

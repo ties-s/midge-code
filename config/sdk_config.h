@@ -59,7 +59,7 @@
  
 
 #ifndef BSP_BTN_BLE_ENABLED
-#define BSP_BTN_BLE_ENABLED 1
+#define BSP_BTN_BLE_ENABLED 0
 #endif
 
 // </h> 
@@ -645,7 +645,7 @@
 // <e> NRF_MPU_LIB_ENABLED - nrf_mpu_lib - Module for MPU
 //==========================================================
 #ifndef NRF_MPU_LIB_ENABLED
-#define NRF_MPU_LIB_ENABLED 0
+#define NRF_MPU_LIB_ENABLED 1
 #endif
 // <q> NRF_MPU_LIB_CLI_CMDS  - Enable CLI commands specific to the module.
  
@@ -659,7 +659,7 @@
 // <e> NRF_STACK_GUARD_ENABLED - nrf_stack_guard - Stack guard
 //==========================================================
 #ifndef NRF_STACK_GUARD_ENABLED
-#define NRF_STACK_GUARD_ENABLED 0
+#define NRF_STACK_GUARD_ENABLED 1
 #endif
 // <o> NRF_STACK_GUARD_CONFIG_SIZE  - Size of the stack guard.
  
@@ -1508,7 +1508,7 @@
 // <196609=> External Full Swing 
 
 #ifndef NRFX_CLOCK_CONFIG_LF_SRC
-#define NRFX_CLOCK_CONFIG_LF_SRC 0
+#define NRFX_CLOCK_CONFIG_LF_SRC 2
 #endif
 
 // <o> NRFX_CLOCK_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -1523,13 +1523,13 @@
 // <7=> 7 
 
 #ifndef NRFX_CLOCK_CONFIG_IRQ_PRIORITY
-#define NRFX_CLOCK_CONFIG_IRQ_PRIORITY 6
+#define NRFX_CLOCK_CONFIG_IRQ_PRIORITY 5
 #endif
 
 // <e> NRFX_CLOCK_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_CLOCK_CONFIG_LOG_ENABLED
-#define NRFX_CLOCK_CONFIG_LOG_ENABLED 0
+#define NRFX_CLOCK_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRFX_CLOCK_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -1726,7 +1726,7 @@
 #endif
 // <o> GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins 
 #ifndef GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 4
+#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 0
 #endif
 
 // <o> GPIOTE_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -1743,7 +1743,7 @@
 // <7=> 7 
 
 #ifndef GPIOTE_CONFIG_IRQ_PRIORITY
-#define GPIOTE_CONFIG_IRQ_PRIORITY 6
+#define GPIOTE_CONFIG_IRQ_PRIORITY 3
 #endif
 
 // </e>
@@ -1755,7 +1755,7 @@
 #endif
 // <o> NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS - Number of lower power input pins 
 #ifndef NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 4
+#define NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS 0
 #endif
 
 // <o> NRFX_GPIOTE_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -1770,13 +1770,13 @@
 // <7=> 7 
 
 #ifndef NRFX_GPIOTE_CONFIG_IRQ_PRIORITY
-#define NRFX_GPIOTE_CONFIG_IRQ_PRIORITY 6
+#define NRFX_GPIOTE_CONFIG_IRQ_PRIORITY 3
 #endif
 
 // <e> NRFX_GPIOTE_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_GPIOTE_CONFIG_LOG_ENABLED
-#define NRFX_GPIOTE_CONFIG_LOG_ENABLED 0
+#define NRFX_GPIOTE_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRFX_GPIOTE_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -2195,7 +2195,7 @@
 // <7=> 7 
 
 #ifndef NRFX_PDM_CONFIG_IRQ_PRIORITY
-#define NRFX_PDM_CONFIG_IRQ_PRIORITY 6
+#define NRFX_PDM_CONFIG_IRQ_PRIORITY 2
 #endif
 
 // <e> NRFX_PDM_CONFIG_LOG_ENABLED - Enables logging in the module.
@@ -2294,7 +2294,7 @@
 // <e> NRFX_PPI_ENABLED - nrfx_ppi - PPI peripheral allocator
 //==========================================================
 #ifndef NRFX_PPI_ENABLED
-#define NRFX_PPI_ENABLED 1
+#define NRFX_PPI_ENABLED 0
 #endif
 // <e> NRFX_PPI_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
@@ -3003,7 +3003,7 @@
 // <e> NRFX_SPIM_ENABLED - nrfx_spim - SPIM peripheral driver
 //==========================================================
 #ifndef NRFX_SPIM_ENABLED
-#define NRFX_SPIM_ENABLED 1
+#define NRFX_SPIM_ENABLED 0
 #endif
 // <q> NRFX_SPIM0_ENABLED  - Enable SPIM0 instance
  
@@ -3048,13 +3048,13 @@
 // <7=> 7 
 
 #ifndef NRFX_SPIM_DEFAULT_CONFIG_IRQ_PRIORITY
-#define NRFX_SPIM_DEFAULT_CONFIG_IRQ_PRIORITY 6
+#define NRFX_SPIM_DEFAULT_CONFIG_IRQ_PRIORITY 7
 #endif
 
 // <e> NRFX_SPIM_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_SPIM_CONFIG_LOG_ENABLED
-#define NRFX_SPIM_CONFIG_LOG_ENABLED 0
+#define NRFX_SPIM_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRFX_SPIM_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -3286,7 +3286,7 @@
 // <3=> NRF_GPIO_PIN_PULLUP 
 
 #ifndef NRFX_SPI_MISO_PULL_CFG
-#define NRFX_SPI_MISO_PULL_CFG 0
+#define NRFX_SPI_MISO_PULL_CFG 3
 #endif
 
 // <o> NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY  - Interrupt priority
@@ -3301,7 +3301,7 @@
 // <7=> 7 
 
 #ifndef NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY
-#define NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY 6
+#define NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY 7
 #endif
 #ifndef SPI_DEFAULT_CONFIG_IRQ_PRIORITY
 #define SPI_DEFAULT_CONFIG_IRQ_PRIORITY 6
@@ -3310,7 +3310,7 @@
 // <e> NRFX_SPI_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_SPI_CONFIG_LOG_ENABLED
-#define NRFX_SPI_CONFIG_LOG_ENABLED 0
+#define NRFX_SPI_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRFX_SPI_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -3321,7 +3321,7 @@
 // <4=> Debug 
 
 #ifndef NRFX_SPI_CONFIG_LOG_LEVEL
-#define NRFX_SPI_CONFIG_LOG_LEVEL 3
+#define NRFX_SPI_CONFIG_LOG_LEVEL 4
 #endif
 
 // <o> NRFX_SPI_CONFIG_INFO_COLOR  - ANSI escape code prefix.
@@ -3625,7 +3625,7 @@
 // <104857600=> 400k 
 
 #ifndef TWI_DEFAULT_CONFIG_FREQUENCY
-#define TWI_DEFAULT_CONFIG_FREQUENCY 26738688
+#define TWI_DEFAULT_CONFIG_FREQUENCY 104857600
 #endif
 
 // <q> TWI_DEFAULT_CONFIG_CLR_BUS_INIT  - Enables bus clearing procedure during init
@@ -3656,7 +3656,7 @@
 // <7=> 7 
 
 #ifndef TWI_DEFAULT_CONFIG_IRQ_PRIORITY
-#define TWI_DEFAULT_CONFIG_IRQ_PRIORITY 6
+#define TWI_DEFAULT_CONFIG_IRQ_PRIORITY 3
 #endif
 
 // <e> TWI0_ENABLED - Enable TWI0 instance
@@ -3751,13 +3751,13 @@
 // <7=> 7 
 
 #ifndef NRFX_TWIM_DEFAULT_CONFIG_IRQ_PRIORITY
-#define NRFX_TWIM_DEFAULT_CONFIG_IRQ_PRIORITY 6
+#define NRFX_TWIM_DEFAULT_CONFIG_IRQ_PRIORITY 3
 #endif
 
 // <e> NRFX_TWIM_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_TWIM_CONFIG_LOG_ENABLED
-#define NRFX_TWIM_CONFIG_LOG_ENABLED 0
+#define NRFX_TWIM_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRFX_TWIM_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -4003,13 +4003,13 @@
 // <7=> 7 
 
 #ifndef NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY
-#define NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY 6
+#define NRFX_TWI_DEFAULT_CONFIG_IRQ_PRIORITY 3
 #endif
 
 // <e> NRFX_TWI_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRFX_TWI_CONFIG_LOG_ENABLED
-#define NRFX_TWI_CONFIG_LOG_ENABLED 0
+#define NRFX_TWI_CONFIG_LOG_ENABLED 1
 #endif
 // <o> NRFX_TWI_CONFIG_LOG_LEVEL  - Default Severity level
  
@@ -4063,7 +4063,7 @@
 // <e> NRFX_PRS_ENABLED - nrfx_prs - Peripheral Resource Sharing module
 //==========================================================
 #ifndef NRFX_PRS_ENABLED
-#define NRFX_PRS_ENABLED 1
+#define NRFX_PRS_ENABLED 0
 #endif
 // <q> NRFX_PRS_BOX_0_ENABLED  - Enables box 0 in the module.
  
@@ -4097,7 +4097,7 @@
  
 
 #ifndef NRFX_PRS_BOX_4_ENABLED
-#define NRFX_PRS_BOX_4_ENABLED 1
+#define NRFX_PRS_BOX_4_ENABLED 0
 #endif
 
 // <e> NRFX_PRS_CONFIG_LOG_ENABLED - Enables logging in the module.
@@ -4398,7 +4398,7 @@
 // <e> NRFX_WDT_ENABLED - nrfx_wdt - WDT peripheral driver
 //==========================================================
 #ifndef NRFX_WDT_ENABLED
-#define NRFX_WDT_ENABLED 0
+#define NRFX_WDT_ENABLED 1
 #endif
 // <o> NRFX_WDT_CONFIG_BEHAVIOUR  - WDT behavior in CPU SLEEP or HALT mode
  
@@ -5142,7 +5142,7 @@
 // <e> FDS_ENABLED - fds - Flash data storage module
 //==========================================================
 #ifndef FDS_ENABLED
-#define FDS_ENABLED 1
+#define FDS_ENABLED 0
 #endif
 // <h> Pages - Virtual page settings
 
@@ -5260,7 +5260,7 @@
  
 
 #ifndef HARDFAULT_HANDLER_ENABLED
-#define HARDFAULT_HANDLER_ENABLED 0
+#define HARDFAULT_HANDLER_ENABLED 1
 #endif
 
 // <e> HCI_MEM_POOL_ENABLED - hci_mem_pool - memory pool implementation used by HCI
@@ -5367,7 +5367,7 @@
  
 
 #ifndef LOW_POWER_PWM_ENABLED
-#define LOW_POWER_PWM_ENABLED 1
+#define LOW_POWER_PWM_ENABLED 0
 #endif
 
 // <e> MEM_MANAGER_ENABLED - mem_manager - Dynamic memory allocator
@@ -5666,7 +5666,7 @@
 // <e> NRF_FSTORAGE_ENABLED - nrf_fstorage - Flash abstraction library
 //==========================================================
 #ifndef NRF_FSTORAGE_ENABLED
-#define NRF_FSTORAGE_ENABLED 1
+#define NRF_FSTORAGE_ENABLED 0
 #endif
 // <h> nrf_fstorage - Common settings
 
@@ -5731,13 +5731,13 @@
  
 
 #ifndef NRF_MEMOBJ_ENABLED
-#define NRF_MEMOBJ_ENABLED 1
+#define NRF_MEMOBJ_ENABLED 0
 #endif
 
 // <e> NRF_PWR_MGMT_ENABLED - nrf_pwr_mgmt - Power management module
 //==========================================================
 #ifndef NRF_PWR_MGMT_ENABLED
-#define NRF_PWR_MGMT_ENABLED 1
+#define NRF_PWR_MGMT_ENABLED 0
 #endif
 // <e> NRF_PWR_MGMT_CONFIG_DEBUG_PIN_ENABLED - Enables pin debug in the module.
 
@@ -5948,7 +5948,7 @@
  
 
 #ifndef BUTTON_ENABLED
-#define BUTTON_ENABLED 1
+#define BUTTON_ENABLED 0
 #endif
 
 // <q> BUTTON_HIGH_ACCURACY_ENABLED  - Enables GPIOTE high accuracy for buttons
@@ -6219,7 +6219,7 @@
 // <4=> Debug 
 
 #ifndef NRF_LOG_DEFAULT_LEVEL
-#define NRF_LOG_DEFAULT_LEVEL 3
+#define NRF_LOG_DEFAULT_LEVEL 4
 #endif
 
 // <q> NRF_LOG_DEFERRED  - Enable deffered logger.
@@ -9712,7 +9712,7 @@
 
 // <o> NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE - Attribute Table size in bytes. The size must be a multiple of 4. 
 #ifndef NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE
-#define NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE 5128
+#define NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE 512
 #endif
 
 // <o> NRF_SDH_BLE_VS_UUID_COUNT - The number of vendor-specific UUIDs. 
@@ -10088,12 +10088,12 @@
 // <2=> NRF_CLOCK_LF_SRC_SYNTH 
 
 #ifndef NRF_SDH_CLOCK_LF_SRC
-#define NRF_SDH_CLOCK_LF_SRC 0
+#define NRF_SDH_CLOCK_LF_SRC 2
 #endif
 
 // <o> NRF_SDH_CLOCK_LF_RC_CTIV - SoftDevice calibration timer interval. 
 #ifndef NRF_SDH_CLOCK_LF_RC_CTIV
-#define NRF_SDH_CLOCK_LF_RC_CTIV 16
+#define NRF_SDH_CLOCK_LF_RC_CTIV 0
 #endif
 
 // <o> NRF_SDH_CLOCK_LF_RC_TEMP_CTIV - SoftDevice calibration timer interval under constant temperature. 
@@ -10101,7 +10101,7 @@
 // <i>  if the temperature has not changed.
 
 #ifndef NRF_SDH_CLOCK_LF_RC_TEMP_CTIV
-#define NRF_SDH_CLOCK_LF_RC_TEMP_CTIV 2
+#define NRF_SDH_CLOCK_LF_RC_TEMP_CTIV 0
 #endif
 
 // <o> NRF_SDH_CLOCK_LF_ACCURACY  - External clock accuracy used in the LL to compute timing.
@@ -10120,7 +10120,7 @@
 // <11=> NRF_CLOCK_LF_ACCURACY_1_PPM 
 
 #ifndef NRF_SDH_CLOCK_LF_ACCURACY
-#define NRF_SDH_CLOCK_LF_ACCURACY 1
+#define NRF_SDH_CLOCK_LF_ACCURACY 8
 #endif
 
 // </h> 

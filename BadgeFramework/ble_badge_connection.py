@@ -34,7 +34,7 @@ class SimpleDelegate(DefaultDelegate):
         self.bleconn.received(data)
 
 class Peripheral2(Peripheral):
-    def _getResp(self, wantType, timeout=5):
+    def _getResp(self, wantType, timeout=2):
         if isinstance(wantType, list) is not True:
             wantType = [wantType]
 

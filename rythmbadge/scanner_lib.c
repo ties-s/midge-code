@@ -42,7 +42,7 @@ void internal_on_scan_report_callback(const ble_gap_evt_adv_report_t* scan_repor
 	advertiser_get_badge_assignement_from_advdata(&badge_assignement, &scan_report->data.p_data[11]); // I know the exact location since it is fixed
 	scanner_scan_report.badge_assignment = badge_assignement;
 
-	//	NRF_LOG_INFO("Scan result. ID: %d, group: %d, rssi: %d", scanner_scan_report.ID, scanner_scan_report.group, scanner_scan_report.rssi);
+//		NRF_LOG_INFO("Scan result. ID: %d, group: %d, rssi: %d", badge_assignement.ID, badge_assignement.group, scanner_scan_report.rssi);
 	scanner_scan_report.timestamp = systick_get_millis();
 
 	memcpy(&scanner_scan_buffer[active_buffer][counter++], &scanner_scan_report, sizeof(scanner_scan_report));
