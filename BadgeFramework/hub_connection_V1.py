@@ -62,13 +62,11 @@ class Connection:
 
     def start(self):
         try:
-            self.connect()
             self.set_id_at_start()
             self.get_status()
             self.start_scan()
             self.start_microphone()
             self.start_imu()
-            self.disconnect()
         except Exception as e:
             print 'Could not start MIDGE {:d}'.format(self.badge_id)
             print str(e)
@@ -85,9 +83,11 @@ class Connection:
 
     def set_id_at_start(self):
         # try:
+        self.connect()
         self.badge.get_status(
             new_id=self.badge_id, new_group_number=self.group_number
         )
+        self.disconnect()
         # except Exception as err:
         #     raise Exception("Could not set id, error:" + str(err))
 
