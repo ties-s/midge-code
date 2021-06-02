@@ -1,4 +1,9 @@
-# "Midge", an spcl badge 
+# "Midge", an SPCL badge 
+
+![The MINGLE MIDGE](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/raw/master/v2.3.jpg)
+
+## Hardware
+Hardware design files are in a [separate hardware repo](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware).
 
 ## Advertisment Packet structure
 The advertisment packet has a field called "manufacturer specific data", with type 0xFF. It should start at the 12th byte. Its length is 11 bytes:
