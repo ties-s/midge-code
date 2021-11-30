@@ -1,6 +1,11 @@
-from hub_connection_V1 import Connection
-import signal,sys,tty,termios
+import signal
+import sys
+import termios
 import time
+import tty
+
+from hub_connection_V1 import Connection
+
 
 def choose_function(connection,input):
     chooser = {

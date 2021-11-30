@@ -76,7 +76,7 @@ class OpenBadge(object):
 		serialized_request_len = struct.pack('<H', len(serialized_request))
 		serialized_request = serialized_request_len + serialized_request
 	
-		logger.debug("Sending: {}, Raw: {}".format(request_message, serialized_request.encode("hex")))
+		logger.debug("Sending: {}, Raw: {}".format(request_message, serialized_request.hex()))
 		
 		self.connection.send(serialized_request, response_len = 0)
 		

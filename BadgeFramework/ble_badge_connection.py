@@ -1,17 +1,18 @@
-from __future__ import division, absolute_import, print_function
-from badge_connection import *
+from __future__ import absolute_import, division, print_function
 
 import logging
+import queue
+import struct
+import sys
 import time
 import uuid
-import sys
 
 from bluepy import *
 from bluepy import btle
-from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
-from bluepy.btle import BTLEException
-import struct
-import queue
+from bluepy.btle import (UUID, AssignedNumbers, BTLEException, DefaultDelegate,
+                         Peripheral, Scanner)
+
+from badge_connection import *
 
 logger = logging.getLogger(__name__)
 
@@ -93,8 +94,8 @@ class BLEBadgeConnection(BadgeConnection):
 	# primitives to send data to other threads.
 
 	def received(self,data):
-		logger.debug("Recieved {}".format(data.encode("hex")))
-
+		logger.debug("Recieved {}".format(data.hex()))
+ 
 		for b in data:
 			self.rx_queue.put(b)
 
@@ -147,13 +148,13 @@ class BLEBadgeConnection(BadgeConnection):
 		if not self.is_connected():
 			raise RuntimeError("BLEBadgeConnection not connected before await_data()!")
 
-		rx_message = ""
+		rx_message = b""
 		rx_bytes_expected = data_len
 
 		if rx_bytes_expected > 0:
 			while True:
 				while(not self.rx_queue.empty()):
-					rx_message += self.rx_queue.get()
+					rx_message += self.rx_queue.get().to_bytes(1, byteorder='big')
 					if(len(rx_message) == rx_bytes_expected):
 						return rx_message
 
