@@ -11,7 +11,7 @@ from bluepy import btle
 from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
 from bluepy.btle import BTLEException
 import struct
-import Queue
+import queue
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class BLEBadgeConnection(BadgeConnection):
 
 
 		# Contains the bytes recieved from the device. Held here until an entire message is recieved.
-		self.rx_queue = Queue.Queue()
+		self.rx_queue = queue.Queue()
 
 
 		BadgeConnection.__init__(self)

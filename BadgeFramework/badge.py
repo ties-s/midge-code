@@ -1,9 +1,10 @@
-from __future__ import division, absolute_import, print_function
-import time
+from __future__ import absolute_import, division, print_function
+
 import logging
-import sys
+import queue
 import struct
-import Queue
+import sys
+import time
 
 DEFAULT_SCAN_WINDOW = 250
 DEFAULT_SCAN_INTERVAL = 1000
@@ -44,11 +45,11 @@ def timestamps_to_time(timestamp_seconds, timestamp_miliseconds):
 class OpenBadge(object):
 	def __init__(self, connection):
 		self.connection = connection
-		self.status_response_queue = Queue.Queue()
-		self.start_microphone_response_queue = Queue.Queue()
-		self.start_scan_response_queue = Queue.Queue()
-		self.start_imu_response_queue = Queue.Queue()
-		self.free_sdc_space_response_queue = Queue.Queue()
+		self.status_response_queue = queue.Queue()
+		self.start_microphone_response_queue = queue.Queue()
+		self.start_scan_response_queue = queue.Queue()
+		self.start_imu_response_queue = queue.Queue()
+		self.free_sdc_space_response_queue = queue.Queue()
 
 	# Helper function to send a BadgeMessage `command_message` to a device, expecting a response
 	# of class `response_type` that is a subclass of BadgeMessage, or None if no response is expected.
