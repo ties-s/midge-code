@@ -3,3 +3,6 @@ _build/*
 *.zip
 BadgeFramework/terminal.py
 BadgeFramework/terminal.py
+
+BadgeFramework/output
+BadgeFramework/output_raw
