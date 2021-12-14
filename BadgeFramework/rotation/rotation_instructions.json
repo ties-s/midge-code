@@ -1,0 +1,22 @@
+[
+    {
+        "freq": 700,
+        "steps": 1000,
+        "dir": "left"
+    },
+    {
+        "freq": 900,
+        "steps": 200,
+        "dir": "left"
+    },
+    {
+        "freq": 200,
+        "steps": 300,
+        "dir": "right"
+    },
+    {
+        "freq": 700,
+        "steps": 200,
+        "dir": "right"
+    }
+]
