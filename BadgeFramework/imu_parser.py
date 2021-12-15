@@ -133,7 +133,7 @@ class IMUParser(object):
                     data.append([x, y, z])
                     timestamps.append(ts[0])
                     sys.stdout.flush()
-                    i = i + 24
+                    i = i + 32
                 else:
                     break
         data_xyz = np.asarray(data)
@@ -174,7 +174,7 @@ class IMUParser(object):
                     rotation.append([q1, q2, q3, q4])
                     timestamps.append(ts[0])
                     # print (ts[0])
-                    i = i + 24
+                    i = i + 32
                 else:
                     break
         rotation_xyz = np.asarray(rotation)
