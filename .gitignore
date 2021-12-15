@@ -6,3 +6,7 @@ BadgeFramework/terminal.py
 
 BadgeFramework/output
 BadgeFramework/output_raw
+BadgeFramework/test_input
+typings/seaborn/__init__.pyi
+.DS_Store
+**/__pycache__
