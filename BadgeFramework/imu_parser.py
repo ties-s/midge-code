@@ -190,19 +190,19 @@ class IMUParser(object):
     def plot_and_save(self, acc: bool, gyr: bool, mag: bool) -> None:
         if acc:
             acc_file_name = os.path.join(
-                self.output_directory_path, f"{self.file_base_name}_{ACCELERATION_POSTFIX}.png")
+                self.output_directory_path, f"{self.file_base_name}{ACCELERATION_POSTFIX}.png")
             ax = self.accel_df.plot(x='time')
             fig = ax.get_figure()
             fig.savefig(acc_file_name)
         if gyr:
             gyr_file_name = os.path.join(
-                self.output_directory_path, f"{self.file_base_name}_{GYROSCOPE_POSTFIX}.png")
+                self.output_directory_path, f"{self.file_base_name}{GYROSCOPE_POSTFIX}.png")
             ax = self.gyro_df.plot(x='time')
             fig = ax.get_figure()
             fig.savefig(gyr_file_name)
         if mag:
             mag_file_name = os.path.join(
-                self.output_directory_path, f"{self.file_base_name}_{MAGNETOMETER_POSTFIX}.png")
+                self.output_directory_path, f"{self.file_base_name}{MAGNETOMETER_POSTFIX}.png")
             ax = self.mag_df.plot(x='time')
             fig = ax.get_figure()
             fig.savefig(mag_file_name)
