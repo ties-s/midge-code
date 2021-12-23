@@ -25,7 +25,7 @@ static volatile bool time_sync_done;
 // +/- 20ppm oscillator --> +/- 0.655 Hz deviation. But we are conservative --> up to 50Hz deviation possible
 // default millis per ticks: 0.03051757812
 
-#define CLOCK_FREQ_DEVIATION_HZ			4.0f
+#define CLOCK_FREQ_DEVIATION_HZ			4.0f// the clock source is now synthesized by the HFCLK, assuming ppm=20
 #define	MIN_MILLIS_PER_TICKS			(1000.0f / ((0 + 1.0f) * (APP_TIMER_CLOCK_FREQ + CLOCK_FREQ_DEVIATION_HZ)))
 #define	MAX_MILLIS_PER_TICKS			(1000.0f / ((0 + 1.0f) * (APP_TIMER_CLOCK_FREQ - CLOCK_FREQ_DEVIATION_HZ)))
 
@@ -104,7 +104,7 @@ uint64_t systick_get_ticks_since_start(void) {
 }
 
 
-void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync) {
+int32_t systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync) {
 	
 	//NRF_LOG_INFO("SYSTICK: Systick_set_millis: %u, (%u, %u), %f, %u, (%u, %u)\n", (uint32_t) ticks_since_start_at_sync, (uint32_t)(millis_sync/1000), (uint32_t) (millis_sync%1000), millis_per_ticks, (uint32_t) ticks_at_offset, (uint32_t)(millis_offset/1000), (uint32_t) (millis_offset%1000));
 	
@@ -120,11 +120,11 @@ void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync
 		millis_offset 	= millis_sync;
 		ticks_at_offset = ticks_since_start_at_sync;
 		millis_synced = 1;
-		return;
+		return 0;
 	}
 	
 	
-	NRF_LOG_INFO("SYSTICK: millis_sync: %u%03u; ticks_at_sync: %u\n", (uint32_t)(millis_sync/1000), (uint32_t) (millis_sync%1000), (uint32_t) ticks_since_start_at_sync);
+//	NRF_LOG_INFO("SYSTICK: millis_sync: %u%03u; ticks_at_sync: %u\n", (uint32_t)(millis_sync/1000), (uint32_t) (millis_sync%1000), (uint32_t) ticks_since_start_at_sync);
 	
 	
 	int32_t error_millis = 0;
@@ -148,7 +148,7 @@ void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync
 	float new_millis_per_ticks = 0;
 	uint64_t delta_ticks = 0;
 	uint64_t delta_millis = 0;
-	float alpha = 0.1;	
+	float alpha = 0.1;
 	CRITICAL_REGION_ENTER();
 	delta_ticks = ((ticks_since_start_at_sync > ticks_at_offset) ? (ticks_since_start_at_sync - ticks_at_offset) : 0);
 	delta_millis = ((millis_sync > millis_offset) ? (millis_sync - millis_offset) : 0);
@@ -172,20 +172,21 @@ void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync
 	ticks_at_offset = ticks_since_start_at_sync;
 	CRITICAL_REGION_EXIT();
 	
-	NRF_LOG_INFO("SYSTICK: updated millis_per_ticks: %f\n", millis_per_ticks);
+	// This is always zero...
+//	NRF_LOG_INFO("SYSTICK: updated millis_per_ticks:" NRF_LOG_FLOAT_MARKER"\n", millis_per_ticks);
 	
 	
 	// TODO: Or an even more complex way: Linear regression of N samples!
 	/*
 	*/
 	
-	return;
+	return error_millis;
 }
 
-void systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_sync, uint16_t milliseconds_sync)
+int32_t systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_sync, uint16_t milliseconds_sync)
 {
 	uint64_t millis_sync = ((uint64_t)seconds_sync) * 1000 + ((uint64_t) milliseconds_sync);
-	systick_set_millis(ticks_since_start_at_sync, millis_sync);
+	int32_t error_millis = systick_set_millis(ticks_since_start_at_sync, millis_sync);
 
 	if (!time_sync_done)
 	{
@@ -193,6 +194,8 @@ void systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_
 		if (storage_init_folder(seconds_sync))
 			NRF_LOG_ERROR("wat werror");
 	}
+
+	return error_millis;
 }
 
 uint64_t systick_get_millis(void) {

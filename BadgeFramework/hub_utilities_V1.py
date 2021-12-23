@@ -1,13 +1,29 @@
-import signal
-import sys
-import termios
-import time
-import tty
-
 from hub_connection_V1 import Connection
+import sys
+import tty
+import termios
+import logging
+import time
 
 
-def choose_function(connection,input):
+def get_logger(name):
+    log_format_file = '%(asctime)s  %(levelname)5s  %(message)s'
+    log_format_console = '%(message)s'
+    logging.basicConfig(level=logging.DEBUG,
+                        format=log_format_file,
+                        filename="data_collection.log",
+                        filemode='w')
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    console.setFormatter(logging.Formatter(log_format_console))
+    logging.getLogger(name).addHandler(console)
+    return logging.getLogger(name)
+
+
+logger = get_logger("hub_utilities")
+
+
+def choose_function(connection, input):
     chooser = {
         "help": connection.print_help,
         "status": connection.handle_status_request,
@@ -24,72 +40,81 @@ def choose_function(connection,input):
         "get_free_space": connection.handle_get_free_space,
     }
     func = chooser.get(input, lambda: "Invalid command!")
+    logger.info("Following command is entered: " + input + ".")
     try:
         out = func()
         return out
     except Exception as error:
-        print(error)
+        logger.info("Error: " + str(error))
         return
+
 
 def start_recording_all_devices(df):
     for _, row in df.iterrows():
-        current_participant = row['Participant Id']
-        current_mac = row['Mac Address']
+        current_participant = row["Participant Id"]
+        current_mac = row["Mac Address"]
         try:
-            cur_connection=Connection(current_participant,current_mac)
-        except Exception as error:
-            print(str(error) + ', sensors are not started.')
-            continue
-        try:
+            cur_connection = Connection(current_participant, current_mac)
             cur_connection.set_id_at_start()
             cur_connection.start_recording_all_sensors()
             cur_connection.disconnect()
         except Exception as error:
-            print(error)
-            cur_connection.disconnect()
+            logger.info("Sensors for midge " + str(current_participant)
+                        + " are not started with the following error: " + str(error))
+            continue
+
 
 def stop_recording_all_devices(df):
     for _, row in df.iterrows():
-        current_participant = row['Participant Id']
-        current_mac = row['Mac Address']
+        current_participant = row["Participant Id"]
+        current_mac = row["Mac Address"]
         try:
-            cur_connection=Connection(current_participant,current_mac)
-        except Exception as error:
-            print(str(error) + ', sensors are not stopped.')
-            continue
-        try:
+            cur_connection = Connection(current_participant, current_mac)
             cur_connection.stop_recording_all_sensors()
             cur_connection.disconnect()
         except Exception as error:
-            print(str(error))
-            cur_connection.disconnect()
+            logger.info("Sensors for midge " + str(current_participant)
+                        + " are not stopped with the following error: " + str(error))
+            continue
+
 
 def synchronise_and_check_all_devices(df):
     for _, row in df.iterrows():
-        current_participant = row['Participant Id']
-        current_mac = row['Mac Address']
+        current_participant = row["Participant Id"]
+        current_mac = row["Mac Address"]
         try:
-            cur_connection=Connection(current_participant,current_mac)
+            cur_connection = Connection(current_participant, current_mac)
         except Exception as error:
-            print(str(error) + ', cannot synchronise.')
+            logger.info(str(error) + ", cannot synchronise.")
             sys.stdout.flush()
             continue
         try:
             out = cur_connection.handle_status_request()
+            logger.info("Status received for the following midge:"
+                        + str(current_participant) + ".")
+            # TODO This is not actually the timestamp before, find how to get it.
+            logger.debug("Device timestamp before sync - seconds:"
+                         + str(out.timestamp.seconds) + ", ms:"
+                         + str(out.timestamp.ms) + ".")
             if out.imu_status == 0:
-                print ('IMU is not recording for participant ' + str(current_participant))
+                logger.info("IMU is not recording for participant "
+                            + str(current_participant) + ".")
             if out.microphone_status == 0:
-                print ('Mic is not recording for participant ' + str(current_participant))
+                logger.info("Mic is not recording for participant "
+                            + str(current_participant) + ".")
             if out.scan_status == 0:
-                print ('Scan is not recording for participant ' + str(current_participant))
+                logger.info("Scan is not recording for participant "
+                            + str(current_participant) + ".")
             if out.clock_status == 0:
-                print ('Cant synch for participant ' + str(current_participant))
+                logger.info("Cant synch for participant "
+                            + str(current_participant) + ".")
             sys.stdout.flush()
             cur_connection.disconnect()
         except Exception as error:
-            print(error)
+            logger.info("Status check for participant " + str(current_participant)
+                        + " returned the following error: " + str(error) + ".")
             sys.stdout.flush()
-            cur_connection.disconnect()
+
 
 class timeout_input(object):
     def __init__(self, poll_period=0.05):
@@ -97,6 +122,7 @@ class timeout_input(object):
 
     def _getch_nix(self):
         from select import select
+
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
@@ -105,14 +131,19 @@ class timeout_input(object):
             if i:
                 ch = sys.stdin.read(1)
             else:
-                ch = ''
+                ch = ""
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
 
-    def input(self, prompt=None, timeout=None,
-              extend_timeout_with_input=True, require_enter_to_confirm=True):
-        prompt = prompt or ''
+    def input(
+        self,
+        prompt=None,
+        timeout=None,
+        extend_timeout_with_input=True,
+        require_enter_to_confirm=True,
+    ):
+        prompt = prompt or ""
         sys.stdout.write(prompt)
         sys.stdout.flush()
         input_chars = []
@@ -120,7 +151,7 @@ class timeout_input(object):
         received_enter = False
         while (time.time() - start_time) < timeout:
             c = self._getch_nix()
-            if c in ('\n', '\r'):
+            if c in ("\n", "\r"):
                 received_enter = True
                 break
             elif c:
@@ -129,11 +160,11 @@ class timeout_input(object):
                 sys.stdout.flush()
                 if extend_timeout_with_input:
                     start_time = time.time()
-        sys.stdout.write('\n')
+        sys.stdout.write("\n")
         sys.stdout.flush()
-        captured_string = ''.join(input_chars)
+        captured_string = "".join(input_chars)
         if require_enter_to_confirm:
-            return_string = captured_string if received_enter else ''
+            return_string = captured_string if received_enter else ""
         else:
             return_string = captured_string
         return return_string

@@ -113,7 +113,7 @@ static void on_receive_callback(const uint8_t * data, uint16_t len)
 	systick_get_timestamp(&timepoint_seconds, &timepoint_milliseconds);
 	uint32_t len_32 = len;
 	app_fifo_write(&rx_fifo, data, &len_32);
-	NRF_LOG_INFO("SENDER: Received: %u\n", len_32);
+//	NRF_LOG_INFO("SENDER: Received: %u\n", len_32);
 	if(receive_notification_handler != NULL) {
 		
 		// Prepare a receive_notification-struct and call the notification-handler

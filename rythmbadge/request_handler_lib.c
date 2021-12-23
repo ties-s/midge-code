@@ -336,7 +336,7 @@ static void process_receive_notification(void * p_event_data, uint16_t event_siz
 	request_event.request_timepoint_ticks = timepoint_ticks;
 
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Which request type: %u, Ticks: %u\n", request_event.request.which_type, request_event.request_timepoint_ticks);
+//	NRF_LOG_INFO("REQUEST_HANDLER: Which request type: %u, Ticks: %u\n", request_event.request.which_type, request_event.request_timepoint_ticks);
 
 	request_handler_t request_handler = NULL;
 	for(uint8_t i = 0; i < sizeof(request_handlers)/sizeof(request_handler_for_type_t); i++)
@@ -373,7 +373,7 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 	response_event.response_retries++;
 	
 	
-	uint32_t len = sizeof(response_event.response.type); // no point in this, it is always the size of the largest entry = 16bytes for get free space
+	uint32_t len = sizeof(response_event.response.type); // no point in this, it is always the size of the largest entry = 16bytes for get free space/status
 	memcpy(&notserialized_buf[2], &(response_event.response), len);
 	
 	ret_code_t ret = NRF_SUCCESS;
@@ -382,7 +382,7 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 	notserialized_buf[0] = (uint8_t)(((uint16_t) len) & 0xFF);
 	ret = sender_transmit(notserialized_buf, len+2, TRANSMIT_DATA_TIMEOUT_MS);
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Transmit status %u!\n", ret);
+//	NRF_LOG_INFO("REQUEST_HANDLER: Transmit status %u!\n", ret);
 
 	if(ret == NRF_SUCCESS) {
 		
@@ -420,7 +420,8 @@ static void status_response_handler(void * p_event_data, uint16_t event_size)
 	response_event.response.type.status_response.microphone_status = (sampling_get_sampling_configuration() & SAMPLING_MICROPHONE) ? 1 : 0;
 	response_event.response.type.status_response.scan_status = (sampling_get_sampling_configuration() & SAMPLING_SCAN) ? 1 : 0;
 	response_event.response.type.status_response.imu_status = (sampling_get_sampling_configuration() & SAMPLING_IMU) ? 1 : 0;
-	response_event.response.type.status_response.timestamp = response_timestamp;
+	response_event.response.type.status_response.time_delta = *(int32_t *)p_event_data;
+	response_event.response.type.status_response.timestamp = response_timestamp; // this is the timestamp the request was received, not when the response was sent LOL
 
 	response_event.response_retries = 0;
 	
@@ -486,13 +487,9 @@ static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_
 
 /**< These are the request handlers that actually call the response-handlers via the scheduler */
 
-static void status_request_handler(void * p_event_data, uint16_t event_size) {
-
-	// Set the timestamp:
-	Timestamp timestamp = request_event.request.type.status_request.timestamp;
-	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
-	advertiser_set_status_flag_is_clock_synced(1);
-	
+static void status_request_handler(void * p_event_data, uint16_t event_size)
+{
+	// first set the badge assignment before opening the folder
 	if(request_event.request.type.status_request.has_badge_assignement) {		
 		
 		BadgeAssignment badge_assignement;
@@ -500,8 +497,12 @@ static void status_request_handler(void * p_event_data, uint16_t event_size) {
 		
 		advertiser_set_badge_assignement(badge_assignement);
 	}
+	// Set the timestamp - the first time the new timestamped folder will be opened:
+	Timestamp timestamp = request_event.request.type.status_request.timestamp;
+	int32_t error_millis = systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
+	advertiser_set_status_flag_is_clock_synced(1);
 	
-	app_sched_event_put(NULL, 0, status_response_handler);
+	app_sched_event_put(&error_millis, sizeof(error_millis), status_response_handler);
 }
 
 
@@ -509,12 +510,13 @@ static void start_microphone_request_handler(void * p_event_data, uint16_t event
 {
 	// Set the timestamp:
 	Timestamp timestamp = request_event.request.type.start_microphone_request.timestamp;
+	uint8_t mode = request_event.request.type.start_microphone_request.mode;
 	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
 	advertiser_set_status_flag_is_clock_synced(1);
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Start microphone");
+	NRF_LOG_INFO("REQUEST_HANDLER: Start microphone, mode: %d", mode);
 
-	ret_code_t ret = sampling_start_microphone();
+	ret_code_t ret = sampling_start_microphone(mode);
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_microphone_response_handler);
@@ -526,7 +528,7 @@ static void start_microphone_request_handler(void * p_event_data, uint16_t event
 static void stop_microphone_request_handler(void * p_event_data, uint16_t event_size)
 {
 	sampling_stop_microphone();
-	NRF_LOG_INFO("REQUEST_HANDLER: Stop microphone\n");
+	NRF_LOG_INFO("REQUEST_HANDLER: Stop microphone");
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
 }
 
@@ -573,7 +575,6 @@ static void start_imu_request_handler(void * p_event_data, uint16_t event_size)
 	NRF_LOG_INFO("REQUEST_HANDLER: Start imu with acc_fsr: %d, gyr_fsr: %d, datarate: %d", acc_fsr, gyr_fsr, datarate);
 	
 	ret_code_t ret = sampling_start_imu(acc_fsr, gyr_fsr, datarate);
-	NRF_LOG_INFO("REQUEST_HANDLER: Ret sampling_start_imu: %d", ret);
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_imu_response_handler);

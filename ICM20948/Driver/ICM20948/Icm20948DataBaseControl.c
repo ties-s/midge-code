@@ -1,7 +1,7 @@
 /*
 * ________________________________________________________________________________________________________
-* Copyright © 2014-2015 InvenSense Inc. Portions Copyright © 2014-2015 Movea. All rights reserved.
-* This software, related documentation and any modifications thereto (collectively “Software”) is subject
+* Copyright ï¿½ 2014-2015 InvenSense Inc. Portions Copyright ï¿½ 2014-2015 Movea. All rights reserved.
+* This software, related documentation and any modifications thereto (collectively ï¿½Softwareï¿½) is subject
 * to InvenSense and its licensors' intellectual property rights under U.S. and international copyright and
 * other intellectual property rights laws.
 * InvenSense and its licensors retain all intellectual property and proprietary rights in and to the Software
@@ -702,8 +702,9 @@ int inv_icm20948_set_odr(struct inv_icm20948 * s, unsigned char androidSensor, u
 	// result should be SAME as you entered in Ms in the Rolldice console
 	// i.e. If you use: O a 63 [ Press capital O then 'a' then 63 then ENTER]
 	// You should get the nearest number to 63 here if you debug  the 'test_odr'  
-
-	//inv_icm20948_ctrl_get_odr( androidSensor, &test_odr );
+//	uint32_t test_odr;
+//	inv_icm20948_ctrl_get_odr(s, androidSensor, &test_odr, ODR_IN_Ms);
+//	NRF_LOG_INFO("get_dr: %d", test_odr);
 
 	inv_icm20948_allow_lpen_control(s);
 	return result;

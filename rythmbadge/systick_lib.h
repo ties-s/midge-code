@@ -80,8 +80,10 @@ void 		systick_get_timestamp(uint32_t* seconds, uint16_t* milliseconds);
  *			
  * @param[in]	ticks_since_start_at_sync	The ticks since start (retrieved via systick_get_ticks_since_start()) at the sync-timepoint.
  * @param[in]	millis_sync					The milliseconds of the external time-source received at ticks_since_start_at_sync.
+ *
+ * @retval	The millis difference (or error) between local time and timestamp of received packet. Propagated to the status response message.
  */
-void 		systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync);
+int32_t	systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync);
 
 /**@brief Function for synchronizing the systick-module with an external time-source via an timestamp.
  * 
@@ -90,8 +92,10 @@ void 		systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sy
  * @param[in]	ticks_since_start_at_sync	The ticks since start (retrieved via systick_get_ticks_since_start()) at the sync-timepoint.
  * @param[in]	seconds_sync				The seconds of the external time-source received at ticks_since_start_at_sync.
  * @param[in]	milliseconds_sync			The milliseconds of the external time-source received at ticks_since_start_at_sync.
+ *
+ * @retval	The millis difference (or error) between local time and timestamp of received packet. Propagated to the status response message.
  */
-void 		systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_sync, uint16_t milliseconds_sync);
+int32_t systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_sync, uint16_t milliseconds_sync);
 
 /**@brief Function to check, whether the millis/timestamps of this module are synced with an external time-source or not.
  *

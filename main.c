@@ -25,6 +25,10 @@
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
+    __disable_irq();
+	NRF_LOG_ERROR("error id: %d, pc: %d, info: %d", id, pc, info);
+    NRF_LOG_FINAL_FLUSH();
+
     NVIC_SystemReset();
 }
 
@@ -38,7 +42,7 @@ int main(void)
 	NRF_LOG_INFO("MAIN: Start...\n\r");
 	led_init();
 
-	APP_SCHED_INIT(sizeof(data_source_info_t), 90);
+	APP_SCHED_INIT(sizeof(data_source_info_t), 50);
 
 	ret = systick_init(0);
 	check_init_error(ret, 1);

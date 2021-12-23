@@ -247,6 +247,7 @@ class StartMicrophoneRequest:
 
 	def reset(self):
 		self.timestamp = None
+		self.mode = 0
 		pass
 
 	def encode(self):
@@ -256,11 +257,14 @@ class StartMicrophoneRequest:
 
 	def encode_internal(self, ostream):
 		self.encode_timestamp(ostream)
+		self.encode_mode(ostream)
 		pass
 
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
 
+	def encode_mode(self, ostream):
+		ostream.write(struct.pack('<B', self.mode))
 
 	@classmethod
 	def decode(cls, buf):
@@ -271,12 +275,15 @@ class StartMicrophoneRequest:
 	def decode_internal(self, istream):
 		self.reset()
 		self.decode_timestamp(istream)
+		self.decode_mode(istream)
 		pass
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)
 
+	def decode_mode(self, istream):
+		self.mode= struct.unpack('<B', istream.read(1))[0]
 
 class StopMicrophoneRequest:
 
@@ -777,6 +784,7 @@ class StatusResponse:
 		self.microphone_status = 0
 		self.scan_status = 0
 		self.imu_status = 0
+		self.time_delta = 0
 		self.timestamp = None
 		pass
 
@@ -791,6 +799,7 @@ class StatusResponse:
 		self.encode_scan_status(ostream)
 		self.encode_imu_status(ostream)
 		self.encode_timestamp(ostream)
+		self.encode_time_delta(ostream)
 		pass
 
 	def encode_clock_status(self, ostream):
@@ -805,8 +814,12 @@ class StatusResponse:
 	def encode_imu_status(self, ostream):
 		ostream.write(struct.pack('<B', self.imu_status))
 
+	def encode_time_delta(self, ostream):
+		ostream.write(struct.pack('<i', self.time_delta))
+
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
+
 
 
 	@classmethod
@@ -821,6 +834,7 @@ class StatusResponse:
 		self.decode_microphone_status(istream)
 		self.decode_scan_status(istream)
 		self.decode_imu_status(istream)
+		self.decode_time_delta(istream)
 		self.decode_timestamp(istream)
 		pass
 
@@ -836,9 +850,13 @@ class StatusResponse:
 	def decode_imu_status(self, istream):
 		self.imu_status= struct.unpack('<B', istream.read(1))[0]
 
+	def decode_time_delta(self, istream):
+		self.time_delta= struct.unpack('<i', istream.read(4))[0]
+
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)
+
 
 
 class StartMicrophoneResponse:

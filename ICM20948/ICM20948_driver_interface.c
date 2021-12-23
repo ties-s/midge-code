@@ -20,7 +20,6 @@ inv_icm20948_t icm_device;
 
 imu_sample_t imu_buffer[MAX_IMU_SOURCES][2][IMU_BUFFER_SIZE];
 
-//const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "accel_raw", "gyr", "gyr_raw", "mag", "mag_raw", "rotation", "game_rotation", "geom_rotation"};
 const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "gyr", "mag", "rotation"};
 
 static const float cfg_mounting_matrix[9]= {
@@ -63,17 +62,9 @@ ret_code_t icm20948_enable_sensors(void)
 {
 	ret_code_t err = NRF_SUCCESS;
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ACCELEROMETER, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_ACCELEROMETER, 1);
-
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GYROSCOPE, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_GYROSCOPE, 1);
-
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED, 1);
-
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ROTATION_VECTOR, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR, 1);
 
 	nrfx_gpiote_in_event_enable(INT1_PIN, true);
 
@@ -85,7 +76,7 @@ ret_code_t icm20948_set_datarate(uint8_t datarate)
 	ret_code_t err = NRF_SUCCESS;
 
 	for (uint8_t sensor=0; sensor<INV_ICM20948_SENSOR_MAX; sensor++)
-		err |= inv_icm20948_set_sensor_period(&icm_device, sensor, 1000/datarate);
+		err |= inv_icm20948_set_sensor_period(&icm_device, sensor, 1000/datarate); // 1125Hz is the internal clock. gyro ODR is always a fraction of this
 
 	return err;
 }
@@ -102,6 +93,7 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 	imu_sample_t sample;
 
 	switch(sensortype) {
+
 	case INV_ICM20948_SENSOR_ACCELEROMETER:
 
 		sample.timestamp = timestamp;
@@ -120,23 +112,6 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		count[ACCEL] = 0;
 		break;
 
-//	case INV_ICM20948_SENSOR_RAW_ACCELEROMETER:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.axis, data, 12);
-//		memcpy( &imu_buffer[ACCEL_RAW][active_buffer[ACCEL_RAW]][count[ACCEL_RAW]++], &sample, sizeof(sample));
-//
-//		if (count[ACCEL_RAW] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = ACCEL_RAW;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[ACCEL_RAW][active_buffer[ACCEL_RAW]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[ACCEL_RAW] = !active_buffer[ACCEL_RAW];
-//		count[ACCEL_RAW] = 0;
-//		break;
-
 	case INV_ICM20948_SENSOR_GYROSCOPE:
 		sample.timestamp = timestamp;
 		memcpy(sample.axis, data, 12);
@@ -153,23 +128,6 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		active_buffer[GYRO] = !active_buffer[GYRO];
 		count[GYRO] = 0;
 		break;
-
-//	case INV_ICM20948_SENSOR_RAW_GYROSCOPE:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.axis, data, 12);
-//		memcpy( &imu_buffer[GYRO_RAW][active_buffer[GYRO_RAW]][count[GYRO_RAW]++], &sample, sizeof(sample));
-//
-//		if (count[GYRO_RAW] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = GYRO_RAW;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[GYRO_RAW][active_buffer[GYRO_RAW]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[GYRO_RAW] = !active_buffer[GYRO_RAW];
-//		count[GYRO_RAW] = 0;
-//		break;
 
 	case INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD:
 		sample.timestamp = timestamp;
@@ -188,25 +146,6 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		count[MAG] = 0;
 		break;
 
-
-//	case INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.axis, data, 12);
-//		memcpy( &imu_buffer[MAG_RAW][active_buffer[MAG_RAW]][count[MAG_RAW]++], &sample, sizeof(sample));
-//
-//		if (count[MAG_RAW] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = MAG_RAW;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[MAG_RAW][active_buffer[MAG_RAW]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[MAG_RAW] = !active_buffer[MAG_RAW];
-//		count[MAG_RAW] = 0;
-//		break;
-
-
 	case INV_ICM20948_SENSOR_ROTATION_VECTOR:
 		sample.timestamp = timestamp;
 		memcpy(sample.quat, data, 16);
@@ -224,41 +163,6 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		count[ROTATION_VECTOR] = 0;
 		break;
 
-//	case INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.quat, data, 16);
-//		memcpy( &imu_buffer[GAME_ROTATION_VECTOR][active_buffer[GAME_ROTATION_VECTOR]][count[GAME_ROTATION_VECTOR]++], &sample, sizeof(sample));
-//
-//		if (count[GAME_ROTATION_VECTOR] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = GAME_ROTATION_VECTOR;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[GAME_ROTATION_VECTOR][active_buffer[GAME_ROTATION_VECTOR]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[GAME_ROTATION_VECTOR] = !active_buffer[GAME_ROTATION_VECTOR];
-//		count[GAME_ROTATION_VECTOR] = 0;
-//		break;
-//
-//	case INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.quat, data, 16);
-//		memcpy( &imu_buffer[GEOMAGNETIC_ROTATION_VECTOR][active_buffer[GEOMAGNETIC_ROTATION_VECTOR]][count[GEOMAGNETIC_ROTATION_VECTOR]++], &sample, sizeof(sample));
-//
-//		if (count[GEOMAGNETIC_ROTATION_VECTOR] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = GEOMAGNETIC_ROTATION_VECTOR;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[GEOMAGNETIC_ROTATION_VECTOR][active_buffer[GEOMAGNETIC_ROTATION_VECTOR]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[GEOMAGNETIC_ROTATION_VECTOR] = !active_buffer[GEOMAGNETIC_ROTATION_VECTOR];
-//		count[GEOMAGNETIC_ROTATION_VECTOR] = 0;
-//		break;
-
-
 	default:
 		return;
 	}
@@ -267,35 +171,7 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 void icm20948_service_isr(void * p_event_data, uint16_t event_size)
 {
 	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
-//	nrfx_gpiote_in_event_enable(INT1_PIN, true);
-//	NRF_LOG_INFO("isr");
-
-//	uint8_t buf[3];
-//	twim_read_register(NULL, 0x70, buf, 2); // fifo count
-//	twim_read_register(NULL, 0x1B, &buf[2], 1); // fifo overflow
-//	NRF_LOG_INFO("fifo size: %d, %d", (uint16_t)(buf[0]<<8|buf[1]), buf[2]);
-
-//	app_sched_event_put(NULL, 0, setup_fifo_burst);
 }
-
-
-//void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-//{
-//	ret_code_t err_code;
-//	// isr needs to be fast, so we just push this to the scheduler
-////	NRF_LOG_INFO("%d", app_sched_queue_space_get());
-////	if (app_sched_queue_space_get() > 10)
-////	{
-////		nrfx_gpiote_in_event_disable(INT1_PIN);
-////		err_code = app_sched_event_put(NULL, 0, icm20948_service_isr);
-//		err_code = app_sched_event_put(NULL, 0, twi_read_fifo);
-//		APP_ERROR_CHECK(err_code);
-//
-////	}
-////	else {
-////		NRF_LOG_INFO("%d", app_sched_queue_space_get());
-////	}
-//}
 
 static uint32_t icm20948_sensor_setup()
 {
@@ -306,7 +182,7 @@ static uint32_t icm20948_sensor_setup()
 	inv_icm20948_soft_reset(&icm_device);
 	inv_icm20948_sleep_us(500000);
 
-	//	/* Setup accel and gyro mounting matrix and associated angle for TODO:current?? board = wait for feedback*/
+	// Setup accel and gyro mounting matrix and associated angle
 	inv_icm20948_init_matrix(&icm_device);
 
 	icm20948_apply_mounting_matrix();
@@ -463,6 +339,3 @@ void inv_icm20948_sleep_us(int us)
 {
 	nrfx_coredep_delay_us(us);
 }
-
-
-

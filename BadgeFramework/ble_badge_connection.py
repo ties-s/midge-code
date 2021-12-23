@@ -1,18 +1,17 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import division, absolute_import, print_function
+from badge_connection import *
 
 import logging
-import queue
-import struct
-import sys
 import time
 import uuid
+import sys
 
 from bluepy import *
 from bluepy import btle
-from bluepy.btle import (UUID, AssignedNumbers, BTLEException, DefaultDelegate,
-                         Peripheral, Scanner)
-
-from badge_connection import *
+from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
+from bluepy.btle import BTLEException
+import struct
+import Queue
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ class SimpleDelegate(DefaultDelegate):
         self.bleconn.received(data)
 
 class Peripheral2(Peripheral):
-    def _getResp(self, wantType, timeout=5):
+    def _getResp(self, wantType, timeout=2):
         if isinstance(wantType, list) is not True:
             wantType = [wantType]
 
@@ -75,7 +74,7 @@ class BLEBadgeConnection(BadgeConnection):
 
 
 		# Contains the bytes recieved from the device. Held here until an entire message is recieved.
-		self.rx_queue = queue.Queue()
+		self.rx_queue = Queue.Queue()
 
 
 		BadgeConnection.__init__(self)
@@ -94,8 +93,8 @@ class BLEBadgeConnection(BadgeConnection):
 	# primitives to send data to other threads.
 
 	def received(self,data):
-		logger.debug("Recieved {}".format(data.hex()))
- 
+		logger.debug("Recieved {}".format(data.encode("hex")))
+
 		for b in data:
 			self.rx_queue.put(b)
 
@@ -148,13 +147,13 @@ class BLEBadgeConnection(BadgeConnection):
 		if not self.is_connected():
 			raise RuntimeError("BLEBadgeConnection not connected before await_data()!")
 
-		rx_message = b""
+		rx_message = ""
 		rx_bytes_expected = data_len
 
 		if rx_bytes_expected > 0:
 			while True:
 				while(not self.rx_queue.empty()):
-					rx_message += self.rx_queue.get().to_bytes(1, byteorder='big')
+					rx_message += self.rx_queue.get()
 					if(len(rx_message) == rx_bytes_expected):
 						return rx_message
 
